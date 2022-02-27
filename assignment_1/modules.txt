@@ -1,0 +1,51 @@
+Module Name: pgmio
+Programs: pgmEcho, pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile, pgmAssemble
+Purpose: All programs deal with reading pgm files and writing them to disk.
+It is useful to separate this code into a module included in these programs
+to avoid repeated code and have a single point of failure. Files may be in
+plaintext or binary, so the module will define functions to read in and write
+ASCII pgm files and similar functions for binary pgm files. Uses pgmdata and 
+pgmerror for structuring data and detecting errors upon read and write.
+
+Module Name: pgmdata
+Programs: pgmEcho, pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile, pgmAssemble
+Purpose: Each program deals with pgm files. A data structure for packaging
+pgm image data together would be useful as this helps with organisation of data
+and readability, and we won't have to keep writing the definition into all files.
+Defines two functions, one to initialise the the struct with sensible starting
+values, and another to free memory allocated to variables of this struct type
+when the program exits.
+
+Module Name: pgmerror
+Programs: pgmEcho, pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile, pgmAssemble
+Purpose: Defines an error struct capable of storing an error code and its message relating
+to errors that may occur when reading in pgm files, and the functions to check occurence of
+specific errors during file read or write, such as null file pointers when files do not exist, 
+or invalid file data. It defines constants related to pgm files such as image dimension bounds
+and expected magic numbers to aid such error detection. References a header file containing the 
+error codes and their related strings.
+
+Module Name: pgmcompare
+Programs: pgmComp
+Purpose: Contains functions for comparing properties of data from two pgm files to evaluate logical
+equivalence. Such functions will compare image dimensions, magic number, maximum gray value and the
+image data itself for an exact match, regardless of whitespace and comments. If any of the comparisons
+do not match, the two files do not describe the same image. It dhould be able to perform this operation
+regardless if the pgm is in ASCII or binary format.
+
+Module Name: pgmconvert
+Programs: pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile, pgmAssemble
+Purpose: Contains functions to convert read in ASCII encoded pgm file data to binary versions and vice
+versa. Such code would need to appear in these programs, so it makes sense to modularise these
+functions.
+
+Module Name: pgmcrop
+Programs: pgmReduce
+Purpose: Contains functions used to reduce a read-in pgm file by the specified factor. Such functions 
+will include retrieving reduced row and column length using this factor, and another to construct a 
+new pgm file with these new row and column lengths.
+
+Module Name: pgmgroup
+Programs: pgmTile, pgmAssemble
+Purpose: Defines functions to disassemble and assemble pgm files. Both functionalites do the
+opposite operation, so it makes sense to include both in one module.

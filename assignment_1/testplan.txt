@@ -1,0 +1,14 @@
+Unit tests will be written for each function where possible, using a shell script 
+to automate this process on various trivial and non-trivial test data to ensure
+the code as robust as possible. Integration tests will also be performed to verify 
+the interaction between modules and functions are correct, such as the interaction 
+between the pgmio and pgmerror modules provide correct error codes and messages. 
+End-to-end testing will also be done to ensure the program as a whole functions as 
+intended.
+
+For example, unit tests for reading ASCII pgm files must cover all verification in 
+place is functioning as intended, preventing invalid data being accepted and crashing
+the program safely if the data does not meet the pgm standard. Non-trivial data may include 
+files with non-integer characters in (other than comments), or more trivially, both 
+files with data points that exceed the bounds of the set max gray value or this value 
+exceeding its bounds of 1-65536 should cause the program to exit safely.
