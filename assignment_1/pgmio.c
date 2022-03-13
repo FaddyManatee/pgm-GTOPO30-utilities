@@ -10,6 +10,7 @@ pgmError *error = NULL;
  * Opens the file in read binary mode, and reads the image data. Data in the
  * header should be encoded in plaintext ASCII. The magic number is used to 
  * determine whether we need to interpret the raster data as bytes or ASCII.
+ * Can return an error.
  */
 pgmImage* readImage(char *filePath)
 {
@@ -106,7 +107,8 @@ pgmImage* readImage(char *filePath)
 
 
 /*
- * Checks for a comment line or sequential comment lines and reads them.
+ * Checks for a comment line or sequential comment lines and reads them. Can
+ * return an error.
  */
 static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
 {
@@ -159,7 +161,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
 
 
 /*
- * Reads the magic number of the image.
+ * Reads the magic number of the image. Can return an error.
  */
 static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePath)
 {
@@ -185,6 +187,11 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePa
 
     magicNumber[1] = fgetc(file);
     error = checkEOF(file);
+    if (error != NULL)
+        return;
+    
+    // Check for a new line character
+    detectNewLine(file, line);
     if (error != NULL)
         return;
 
@@ -214,7 +221,7 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePa
 
 
 /*
- * Reads the width and height of the image.
+ * Reads the width and height of the image. Can return an error.
  */
 static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePath)
 {
@@ -226,9 +233,25 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
     unsigned int width = 0;
     unsigned int height = 0;
 
-    // Skip preceeding whitespace and read in width and height.
-    int scanCount = fscanf(file, " %u %u", &width, &height);
+    // Skip preceeding whitespace and read in width.
+    int scanCount = fscanf(file, " %u", &width);
     error = checkEOF(file);
+    if (error != NULL)
+        return;
+
+    // Check for a newline character.
+    detectNewLine(file, line);
+    if (error != NULL)
+        return;
+    
+    // Skip preceeding whitespace and read in height.
+    int scanCount = fscanf(file, " %u", &height);
+    error = checkEOF(file);
+    if (error != NULL)
+        return;
+
+    // Check for a newline character.
+    detectNewLine(file, line);
     if (error != NULL)
         return;
 
@@ -239,14 +262,11 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
 
     // Set width and height if check passes.
     setDimensions(image, width, height);
-
-    // Increment line number by one. We have read a line.
-    *line++;
 }
 
 
 /*
- * Reads maximum gray value.
+ * Reads maximum gray value. Can return an error.
  */
 static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *filePath)
 {
@@ -263,6 +283,11 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *fileP
     if (error != NULL)
         return;
 
+    // Check for a newline character.
+    detectNewLine(file, line);
+    if (error != NULL)
+        return;
+
     // Check that the maximum gray value is valid.
     error = checkInvalidMaxGrayValue(maxGrayValue, scanCount, filePath);
     if (error != NULL)
@@ -270,14 +295,11 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *fileP
 
     // Set the value if check passes.
     setMaxGrayValue(image, maxGrayValue);
-
-    // Increment line number by one. We have read a line.
-    *line++;
 }
 
 
 /*
- * Reads the image raster.
+ * Reads the image raster. Can return an error.
  */
 static void readRaster(pgmImage *image, FILE *file, char *filePath)
 {
@@ -318,7 +340,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath)
 
 
 /*
- * Reads the image raster, interpreting it as ASCII data.
+ * Reads the image raster, interpreting it as ASCII data. Can return an error.
  */
 static void readAsciiData(pgmImage *image, FILE *file, char *path)
 {
@@ -355,7 +377,7 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
 
 
 /*
- * Reads the image raster, interpreting it as raw byte data.
+ * Reads the image raster, interpreting it as raw byte data. Can return an error.
  */
 static void readRawData(pgmImage *image, FILE *file, char *path)
 {
@@ -397,8 +419,25 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 
 
 /*
+ * Detects that a newline character exists at the end of a line. Can return an error.
+ */
+static void detectNewLine(FILE *file, int *line)
+{
+    int scanCount = fscanf(file, " \n", &maxGrayValue);
+    error = checkEOF(file);
+    if (error != NULL)
+        return;
+
+    if (scanCount == 1)
+    {
+        *line++;
+    }
+}
+
+
+/*
  * Writes an image to disk given an image pointer and the file path, with the 
- * same raster data formatting as the original image.
+ * same raster data formatting as the original image. Can return an error.
  */
 void echoImage(pgmImage *image, char *filePath)
 {
@@ -439,7 +478,7 @@ void echoImage(pgmImage *image, char *filePath)
  * Writes an image to disk given an image pointer, the file path, and if the
  * output file should be in ASCII or binary format. A value of 0 indicates that
  * the output file should be in ASCII format, whilst a value of 1 indicates that
- * the output file should be in binary format.
+ * the output file should be in binary format. Can return an error.
  */
 void writeImage(pgmImage *image, char *filePath, int binaryOrAscii)
 {
@@ -570,6 +609,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
 
 /*
  * Performs checks to determine whether it is safe to write to the output file.
+ * Can return an error.
  */
 static void imageWriteChecks(pgmImage *image, FILE *file, char *path, int choice)
 {
