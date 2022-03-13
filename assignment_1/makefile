@@ -1,20 +1,20 @@
 all: pgmEcho # pgmComp pgma2b pgmb2a pgmReduce pgmTile pgmAssemble
 
 pgmEcho: pgmEcho.o pgmio.o pgmerror.o pgmdata.o
-    gcc pgmEcho.o pgmio.o pgmerror.o pgmdata.o -o pgmEcho -g -Wall -Werror
+	gcc pgmEcho.o pgmio.o pgmerror.o pgmdata.o -o pgmEcho -g
 
 pgmEcho.o: pgmEcho.c
-    gcc pgmEcho.c -c -Wall -Werror
+	gcc pgmEcho.c -c
 
 pgmio.o: pgmio.c pgmdata.h pgmerror.h pgmlimits.h
-    gcc pgmio.c -c -Wall -Werror
+	gcc pgmio.c -c
 
 pgmerror.o: pgmerror.c pgmdata.h pgmexit.h pgmlimits.h
-    gcc pgmerror.c -c -Wall -Werror
+	gcc pgmerror.c -c
 
 pgmdata.o: pgmdata.c pgmlimits.h
-    gcc pgmdata.c -c -Wall -Werror
+	gcc pgmdata.c -c
 
 clean:
-    rm *.o pgmEcho pgmComp pgma2b pgmb2a pgmReduce pgmTile pgmAssemble
-    
+	rm *.o pgmEcho pgmComp pgma2b pgmb2a pgmReduce pgmTile pgmAssemble
+		

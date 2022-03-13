@@ -19,6 +19,23 @@ typedef struct pgmErr
 /*
  *
  */
+static pgmErr* createError(pgmErr *err, int code, char *prefix , char *string)
+{
+    err = (pgmErr *) malloc(sizeof(pgmErr));
+    err->errorMsg = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(string) + 2));
+
+    err->errorCode = code;
+    strcat(err->errorMsg, prefix);
+    strcat(err->errorMsg, " ");
+    strcat(err->errorMsg, string); 
+    
+    return err;
+}
+
+
+/*
+ *
+ */
 pgmErr* checkInvalidFileName(FILE *file, char *path)
 {
     pgmErr *invalidFileName = NULL;
@@ -35,7 +52,7 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
  */
 pgmErr* checkEOF(FILE *file)
 {
-    pgmErr* *eofDetected = NULL;
+    pgmErr *eofDetected = NULL;
 
     if (feof(file))
         createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
@@ -48,7 +65,7 @@ pgmErr* checkEOF(FILE *file)
  */
 pgmErr* checkBinaryEOF(int scanned)
 {
-    pgmErr* *eofDetected = NULL;
+    pgmErr *eofDetected = NULL;
 
     if (scanned == 0)
         createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
@@ -168,7 +185,7 @@ pgmErr* checkRequiredData(pgmImage *image)
         getHeight(image) < MIN_IMAGE_DIMENSION ||
         getHeight(image) > MAX_IMAGE_DIMENSION ||
         getMaxGrayValue(image) < MIN_GRAY_VALUE ||
-        getMaxGrayValue(image > MAX_GRAY_VALUE))
+        getMaxGrayValue(image) > MAX_GRAY_VALUE)
     {
         createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
     }
@@ -244,7 +261,7 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
 
     // If the image is allocated but not its raster, create an error.
-    if (writeFailed == NULL && getRaster(image) == DEFAULT_VALUE)
+    if (writeFailed == NULL && getRaster(image) == NULL)
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
 
     // Check that the formatting, image dimensions, and maximum gray value are valid.
@@ -255,7 +272,7 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
         getHeight(image) < MIN_IMAGE_DIMENSION ||
         getHeight(image) > MAX_IMAGE_DIMENSION ||
         getMaxGrayValue(image) < MIN_GRAY_VALUE ||
-        getMaxGrayValue(image > MAX_GRAY_VALUE))
+        getMaxGrayValue(image) > MAX_GRAY_VALUE)
     {
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
     }
@@ -267,17 +284,10 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
 /*
  *
  */
-static pgmErr* createError(pgmErr *err, int code, char *prefix , char *string)
+static void freeError(pgmErr *err)
 {
-    err = (pgmErr *) malloc(sizeof(pgmErr));
-    err->errorMsg = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(string) + 2));
-
-    err->errorCode = code;
-    strcat(err->errorMsg, prefix);
-    strcat(err->errorMsg, " ");
-    strcat(err->errorMsg, string); 
-    
-    return err;
+    free(err->errorMsg);
+    free(err);
 }
 
 
@@ -291,14 +301,4 @@ int displayError(pgmErr *err)
     freeError(err);
     err = NULL;
     return code;
-}
-
-
-/*
- *
- */
-static void freeError(pgmErr *err)
-{
-    free(err->errorMsg);
-    free(err);
 }

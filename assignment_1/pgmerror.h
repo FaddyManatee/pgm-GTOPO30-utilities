@@ -4,6 +4,7 @@ pgmError* checkInvalidFileName(FILE *file, char *path);
 pgmError* checkInvalidWriteMode(int mode);
 pgmError* checkImageCanBeWritten(pgmImage *image, char *path);
 pgmError* checkEOF(FILE *file);
+pgmError* checkBinaryEOF(int scanned);
 pgmError* checkComment(char *comment, char *path);
 pgmError* checkCommentLimit(char *comment);
 pgmError* checkInvalidMagicNo(unsigned short *magicNo, char *path);

@@ -187,6 +187,12 @@ unsigned int getMaxGrayValue(image *image)
 }
 
 
+unsigned short* getRaster(image *image)
+{
+    return image->raster;
+}
+
+
 unsigned int getBytes(image *image)
 {
     return image->bytes;

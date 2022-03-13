@@ -9,6 +9,7 @@ unsigned short getMagicNumber(pgmImage *image);
 unsigned int getWidth(pgmImage *image);
 unsigned int getHeight(pgmImage *image);
 unsigned int getMaxGrayValue(pgmImage *image);
+unsigned short* getRaster(pgmImage *image);
 unsigned int getBytes(pgmImage *image);
 unsigned short getPixel(pgmImage *image, int row, int column);
 char* setComment(pgmImage *image, int lineNo);

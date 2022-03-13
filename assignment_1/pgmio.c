@@ -5,104 +5,20 @@
 
 pgmError *error = NULL;
 
-
 /*
- * Opens the file in read binary mode, and reads the image data. Data in the
- * header should be encoded in plaintext ASCII. The magic number is used to 
- * determine whether we need to interpret the raster data as bytes or ASCII.
- * Can return an error.
+ * Detects that a newline character exists at the end of a line. Can return an error.
  */
-pgmImage* readImage(char *filePath)
+static void detectNewLine(FILE *file, int *line)
 {
-    // Record line number so that we can track comment positions before raster data.
-    int *lineNumber;
-    error = NULL;
-
-    pgmImage *newImage = createImage();
-
-    // Initial line number;
-    *lineNumber = 0;
-
-    FILE *inputFile = fopen(filePath, "rb");
-
-    // Check that the file path exists.
-    error = checkInvalidFileName(inputFile, filePath);
+    int scanCount = fscanf(file, " \n");
+    error = checkEOF(file);
     if (error != NULL)
+        return;
+
+    if (scanCount == 1)
     {
-        newImage = NULL;
-        goto cleanup;
+        *line++;
     }
-
-    // Read comments that occur before the magic number
-    readComments(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read magic number and check if an error occurred.
-    readMagicNumber(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read comments that occur before the dimensions.
-    readComments(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read width and height, and check if an error occurred.
-    readDimensions(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read comments that occur before the maximum gray value.
-    readComments(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read maximum gray value, and check if an error occurred.
-    readMaxGrayValue(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read comments that occur before the raster.
-    readComments(newImage, lineNumber, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // Read raster data, and check if an error occurred. We no longer need line number.
-    readRaster(newImage, inputFile, filePath);
-    if (error != NULL)
-    {
-        newImage = NULL;
-        goto cleanup;
-    }
-
-    // We are finished with the file, tidy up.
-    goto cleanup;
-
-    cleanup:
-    fclose(inputFile);
-    return newImage;
 }
 
 
@@ -245,7 +161,7 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
         return;
     
     // Skip preceeding whitespace and read in height.
-    int scanCount = fscanf(file, " %u", &height);
+    scanCount = fscanf(file, " %u", &height);
     error = checkEOF(file);
     if (error != NULL)
         return;
@@ -299,47 +215,6 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *fileP
 
 
 /*
- * Reads the image raster. Can return an error.
- */
-static void readRaster(pgmImage *image, FILE *file, char *filePath)
-{
-    // Check if image is allocated.
-    error = checkImageAllocated(image);
-    if (error != NULL)
-        return;
-
-    // Check that we have enough data to allocate memory to the image raster.
-    error = checkRequiredData(image);
-    if (error != NULL)
-        return;
-
-    /* 
-     * We now have enough information about the image to allocate and initialise
-     * the values of the allocated image's raster.
-     */
-    initImageRaster(image);
-
-    // Double check raster was allocated properly.
-    error = checkRasterAllocated(image);
-    if (error != NULL)
-        return;
-
-    // Determine the type of data (binary or ASCII) the raster is stored in.
-    int raw = determineFormat(image);
-
-    // Choose appropriate read statements based on the type of data of the image raster.
-    if (raw == 0)
-    {
-        readAsciiData(image, file, filePath);
-    }
-    else if (raw == 1)
-    {
-        readRawData(image, file, filePath);
-    }
-}
-
-
-/*
  * Reads the image raster, interpreting it as ASCII data. Can return an error.
  */
 static void readAsciiData(pgmImage *image, FILE *file, char *path)
@@ -383,7 +258,6 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 {
     int x;
     int scanCount = 0;
-    int pixelsRead = 0;
     unsigned short pixel = 0;
 
     // Determine how many bytes a pixel uses. 
@@ -419,19 +293,283 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 
 
 /*
- * Detects that a newline character exists at the end of a line. Can return an error.
+ * Reads the image raster. Can return an error.
  */
-static void detectNewLine(FILE *file, int *line)
+static void readRaster(pgmImage *image, FILE *file, char *filePath)
 {
-    int scanCount = fscanf(file, " \n", &maxGrayValue);
-    error = checkEOF(file);
+    // Check if image is allocated.
+    error = checkImageAllocated(image);
     if (error != NULL)
         return;
 
-    if (scanCount == 1)
+    // Check that we have enough data to allocate memory to the image raster.
+    error = checkRequiredData(image);
+    if (error != NULL)
+        return;
+
+    /* 
+     * We now have enough information about the image to allocate and initialise
+     * the values of the allocated image's raster.
+     */
+    initImageRaster(image);
+
+    // Double check raster was allocated properly.
+    error = checkRasterAllocated(image);
+    if (error != NULL)
+        return;
+
+    // Determine the type of data (binary or ASCII) the raster is stored in.
+    int raw = determineFormat(image);
+
+    // Choose appropriate read statements based on the type of data of the image raster.
+    if (raw == 0)
     {
-        *line++;
+        readAsciiData(image, file, filePath);
     }
+    else if (raw == 1)
+    {
+        readRawData(image, file, filePath);
+    }
+}
+
+
+/*
+ * Opens the file in read binary mode, and reads the image data. Data in the
+ * header should be encoded in plaintext ASCII. The magic number is used to 
+ * determine whether we need to interpret the raster data as bytes or ASCII.
+ * Can return an error.
+ */
+pgmImage* readImage(char *filePath)
+{
+    // Record line number so that we can track comment positions before raster data.
+    int *lineNumber;
+    error = NULL;
+
+    pgmImage *newImage = createImage();
+
+    // Initial line number;
+    *lineNumber = 0;
+
+    FILE *inputFile = fopen(filePath, "rb");
+
+    // Check that the file path exists.
+    error = checkInvalidFileName(inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read comments that occur before the magic number
+    readComments(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read magic number and check if an error occurred.
+    readMagicNumber(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read comments that occur before the dimensions.
+    readComments(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read width and height, and check if an error occurred.
+    readDimensions(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read comments that occur before the maximum gray value.
+    readComments(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read maximum gray value, and check if an error occurred.
+    readMaxGrayValue(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read comments that occur before the raster.
+    readComments(newImage, lineNumber, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // Read raster data, and check if an error occurred. We no longer need line number.
+    readRaster(newImage, inputFile, filePath);
+    if (error != NULL)
+    {
+        newImage = NULL;
+        goto cleanup;
+    }
+
+    // We are finished with the file, tidy up.
+    goto cleanup;
+
+    cleanup:
+    fclose(inputFile);
+    return newImage;
+}
+
+
+/*
+ * Writes consecutive comment lines that appeared in the read image.
+ */
+static void writeCommentLines(pgmImage *image, FILE *file, int *line)
+{
+    int count = 0;
+    do
+    {
+        // Avoid incrementing line number on first iteration.
+        if (count > 0)
+            *line++;
+
+        // Get the comment string that was read at the specified line. 
+        char *comment = getComment(image, *line);
+
+        // Write the comment to the file if not NULL. Comments are already terminated with \n.
+        if (comment != NULL)
+            fputs(comment, file);
+
+        count++;
+        // Loop while there exists a comment on the next line.
+    } while (getCommentExists(image, *line + 1) == 1);
+}
+
+
+/*
+ * Writes the header section of a pgm image to the output file.
+ */
+static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
+{
+    // Write comment lines that appear before magic number.
+    writeCommentLines(image, file, line);
+
+    // Write the magic number according to format.
+    if (format == ASCII)
+    {
+        fputs("P2\n", file);
+    }
+    else if (format == RAW)
+    {
+        fputs("P5\n", file);
+    }
+    *line++;
+
+    // Write comment lines that appear before dimensions.
+    writeCommentLines(image, file, line);
+
+    // Write the dimensions.
+    fprintf(file, "%u %u\n", getWidth(image), getHeight(image));
+    *line++;
+
+    // Write comment lines that appear before maximum gray value.
+    writeCommentLines(image, file, line);
+
+    // Write the maximum gray value.
+    fprintf(file, "%u\n", getMaxGrayValue(image));
+    *line++;
+
+    // Write comment lines that appear before the raster. Line number no longer needed.
+    writeCommentLines(image, file, line);
+}
+
+
+/*
+ * Writes the image raster to a file in ascii format.
+ */
+static void writeAsciiData(pgmImage *image, FILE *file)
+{
+    int width = getWidth(image);
+    int height = getHeight(image);
+
+    int x;
+    int y;
+    for (x = 0; x < height; x++)
+    {
+        for (y = 0; y < width; y++)
+        {
+            // For the first pixel, write without preceding whitespace.
+            if (x == 0 && y == 0)
+                fprintf(file, "%u", getPixel(image, x, y));
+
+            // Write remaining pixels padded with whitespace.
+            fprintf(file, " %u", getPixel(image, x, y));
+        }
+
+        // Append a newline character before moving onto the next row in raster.
+        fputs("\n", file);
+    }
+}
+
+
+/*
+ * Writes the image raster to a file in raw byte format.
+ */
+static void writeBinaryData(pgmImage *image, FILE *file)
+{
+    int width = getWidth(image);
+    int height = getHeight(image);
+
+    int bytesNeeded = getBytes(image);
+    unsigned short pixel = 0;
+
+    int x;
+    int y;
+    for (x = 0; x < height; x++)
+    {
+        for (y = 0; y < width; y++)
+        {
+            // ENDIANNESS?
+            pixel = getPixel(image, x, y);
+            fwrite(&pixel, bytesNeeded, 1, file);
+        }
+
+        // Append a newline character before moving onto the next row in raster.
+        fputs("\n", file);
+    }
+}
+
+
+/*
+ * Performs checks to determine whether it is safe to write to the output file.
+ * Can return an error.
+ */
+static void imageWriteChecks(pgmImage *image, FILE *file, char *path, int choice)
+{
+    // Check that the file path exists.
+    error = checkInvalidFileName(file, path);
+    if (error != NULL)
+        return;
+
+    // Check that the specified output format is valid.
+    error = checkInvalidWriteMode(choice);
+    if (error != NULL)
+        return;
+
+    // Check if image has all required data to write to file.
+    error = checkImageCanBeWritten(image, path);
 }
 
 
@@ -511,142 +649,4 @@ void writeImage(pgmImage *image, char *filePath, int binaryOrAscii)
 
     cleanup:
     fclose(outputFile);
-}
-
-
-/*
- * Writes the header section of a pgm image to the output file.
- */
-static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
-{
-    // Write comment lines that appear before magic number.
-    writeCommentLines(image, file, line);
-
-    // Write the magic number according to format.
-    if (format == ASCII)
-    {
-        fputs("P2\n", file);
-    }
-    else if (format == RAW)
-    {
-        fputs("P5\n", file);
-    }
-    *line++;
-
-    // Write comment lines that appear before dimensions.
-    writeCommentLines(image, file, line);
-
-    // Write the dimensions.
-    fprintf(file, "%u %u\n", getWidth(image), getHeight(image));
-    *line++;
-
-    // Write comment lines that appear before maximum gray value.
-    writeCommentLines(image, file, line);
-
-    // Write the maximum gray value.
-    fprintf(file, "%u\n", getMaxGrayValue(image));
-    *line++;
-
-    // Write comment lines that appear before the raster. Line number no longer needed.
-    writeCommentLines(image, file, line);
-}
-
-
-/*
- * Writes the image raster to a file in ascii format.
- */
-static void writeAsciiData(pgmImage *image, FILE *file)
-{
-    int width = getWidth(image);
-    int height = getHeight(image);
-
-    int x;
-    int y;
-    for (x = 0; x < height; x++)
-    {
-        for (y = 0; y < width; y++)
-        {
-            // For the first pixel, write without preceding whitespace.
-            if (x == 0 && y == 0)
-                fprintf(file, "%u", getPixel(image, x, y));
-
-            // Write remaining pixels padded with whitespace.
-            fprintf(file, " %u", getPixel(image, x, y));
-        }
-
-        // Append a newline character before moving onto the next row in raster.
-        fputc("\n", file);
-    }
-}
-
-
-/*
- * Writes the image raster to a file in raw byte format.
- */
-static void writeBinaryData(pgmImage *image, FILE *file)
-{
-    int width = getWidth(image);
-    int height = getHeight(image);
-
-    int bytesNeeded = getBytes(image);
-    unsigned short pixel = 0;
-
-    int x;
-    int y;
-    for (x = 0; x < height; x++)
-    {
-        for (y = 0; y < width; y++)
-        {
-            // ENDIANNESS?
-            pixel = getPixel(image, x, y);
-            fwrite(&pixel, bytesNeeded, 1, file);
-        }
-
-        // Append a newline character before moving onto the next row in raster.
-        fputc("\n", file);
-    }
-}
-
-/*
- * Performs checks to determine whether it is safe to write to the output file.
- * Can return an error.
- */
-static void imageWriteChecks(pgmImage *image, FILE *file, char *path, int choice)
-{
-    // Check that the file path exists.
-    error = checkInvalidFileName(file, path);
-    if (error != NULL)
-        return;
-
-    // Check that the specified output format is valid.
-    error = checkInvalidWriteMode(choice);
-    if (error != NULL)
-        return;
-
-    // Check if image has all required data to write to file.
-    error = checkImageCanBeWritten(image, path);
-}
-
-/*
- * Writes consecutive comment lines that appeared in the read image.
- */
-static void writeCommentLines(pgmImage *image, FILE *file, int *line)
-{
-    int count = 0;
-    do
-    {
-        // Avoid incrementing line number on first iteration.
-        if (count > 0)
-            *line++;
-
-        // Get the comment string that was read at the specified line. 
-        char *comment = getComment(image, *line);
-
-        // Write the comment to the file if not NULL. Comments are already terminated with \n.
-        if (comment != NULL)
-            fputs(comment, file);
-
-        count++;
-        // Loop while there exists a comment on the next line.
-    } while (getCommentExists(image, *line + 1) == 1);
 }
