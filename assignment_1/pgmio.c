@@ -341,14 +341,18 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath)
  */
 pgmImage* readImage(char *filePath)
 {
-    // Record line number so that we can track comment positions before raster data.
-    int *lineNumber;
     error = NULL;
 
-    pgmImage *newImage = createImage();
+    // Record line number so that we can track comment positions before raster data.
+    int line;
+    int *lineNumber;
 
-    // Initial line number;
-    *lineNumber = 0;
+    // Initial line number.
+    line = 0;
+    lineNumber = &line;
+
+    // Initialise the image.
+    pgmImage *newImage = createImage();
 
     FILE *inputFile = fopen(filePath, "rb");
 
@@ -428,7 +432,9 @@ pgmImage* readImage(char *filePath)
     goto cleanup;
 
     cleanup:
-    fclose(inputFile);
+    if (inputFile != NULL)
+        fclose(inputFile);
+    
     return newImage;
 }
 
@@ -648,5 +654,6 @@ void writeImage(pgmImage *image, char *filePath, int binaryOrAscii)
     goto cleanup;
 
     cleanup:
-    fclose(outputFile);
+    if (outputFile != NULL)
+        fclose(outputFile);
 }

@@ -61,10 +61,10 @@ typedef struct comment
 typedef struct image
 {
     int raw;
-    unsigned int width; 
-    unsigned int height;
-    unsigned int maxGrayValue;
-    unsigned int bytes;
+    int width; 
+    int height;
+    int maxGrayValue;
+    int bytes;
     unsigned short magicNumber;
     unsigned short *raster;
     comment *comments;
@@ -85,7 +85,7 @@ image* createImage()
     newImage->height = DEFAULT_VALUE;
     newImage->maxGrayValue = DEFAULT_VALUE;
     newImage->bytes = DEFAULT_VALUE;
-    newImage->magicNumber = DEFAULT_VALUE;
+    newImage->magicNumber = 0;
     newImage->raster = NULL;
     
     // Allocate memory for storing comment lines and set initial NULL/empty values.
@@ -244,7 +244,7 @@ void setMagicNumber(image *image, unsigned short magicNo, int rawOrAscii)
 /*
  * Sets the dimensions for an image given its pointer.
  */
-void setDimensions(image *image, unsigned int width, unsigned int height)
+void setDimensions(image *image, int width, int height)
 {
     image->width = width;
     image->height = height;
@@ -255,7 +255,7 @@ void setDimensions(image *image, unsigned int width, unsigned int height)
  * Sets the magic number for an image given its pointer. We can now also
  * determine how many bytes each pixel in the raster occupies.
  */
-void setMaxGrayValue(image *image, unsigned int maxGray)
+void setMaxGrayValue(image *image, int maxGray)
 {
     image->maxGrayValue = maxGray;
 
@@ -273,7 +273,7 @@ void setMaxGrayValue(image *image, unsigned int maxGray)
 /*
  *
  */
-void setPixel(image *image, unsigned int value, int pixelNo)
+void setPixel(image *image, unsigned short value, int pixelNo)
 {
     image->raster[pixelNo] = value;
 }

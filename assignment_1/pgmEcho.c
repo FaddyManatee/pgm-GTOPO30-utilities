@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     }
 
     // Read image file and store returned pointer to the image structure. 
-    pgmImage *inputImage = readImage(argv[0]);
+    pgmImage *inputImage = readImage(argv[1]);
 
     // If the external error pointer is no longer null, a file read error has been detected.
     if (error != NULL)
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     }
 
     // Write the data referenced by the image pointer to a new file.
-    echoImage(inputImage, argv[1]);
+    echoImage(inputImage, argv[2]);
 
     // If the external error pointer is no longer null, a file write error has been detected.
     if (error != NULL)

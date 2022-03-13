@@ -19,17 +19,14 @@ typedef struct pgmErr
 /*
  *
  */
-static pgmErr* createError(pgmErr *err, int code, char *prefix , char *string)
+static void createError(pgmErr *err, int code, char *prefix , char *string)
 {
-    err = (pgmErr *) malloc(sizeof(pgmErr));
-    err->errorMsg = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(string) + 2));
-
+    err->errorMsg = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(string) + 3));
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");
-    strcat(err->errorMsg, string); 
-    
-    return err;
+    strcat(err->errorMsg, string);
+    strcat(err->errorMsg, "\n");
 }
 
 
@@ -38,12 +35,17 @@ static pgmErr* createError(pgmErr *err, int code, char *prefix , char *string)
  */
 pgmErr* checkInvalidFileName(FILE *file, char *path)
 {
-    pgmErr *invalidFileName = NULL;
+    pgmErr *invalidFileName = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (file == NULL)
+    {
+        // We will free the error when we display it.
         createError(invalidFileName, EXIT_BAD_FILE_NAME, STR_BAD_FILE_NAME, path);
+        return invalidFileName;
+    }
 
-    return invalidFileName;
+    free(invalidFileName);
+    return NULL;
 }
 
 
@@ -52,11 +54,17 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
  */
 pgmErr* checkEOF(FILE *file)
 {
-    pgmErr *eofDetected = NULL;
+    pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (feof(file))
+    {
+        // We will free the error when we display it.
         createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
-    return eofDetected;
+        return eofDetected;
+    }
+    
+    free(eofDetected);
+    return NULL;
 }
 
 
@@ -65,11 +73,17 @@ pgmErr* checkEOF(FILE *file)
  */
 pgmErr* checkBinaryEOF(int scanned)
 {
-    pgmErr *eofDetected = NULL;
+    pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (scanned == 0)
+    {
+        // We will free the error when we display it.
         createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
-    return eofDetected;
+        return eofDetected;
+    }
+    
+    free(eofDetected);
+    return NULL;
 }
 
 
@@ -78,12 +92,17 @@ pgmErr* checkBinaryEOF(int scanned)
  */
 pgmErr* checkComment(char *comment, char *path)
 {
-    pgmErr *badCommentLine = NULL;
+    pgmErr *badCommentLine = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (comment == NULL)
+    {
+        // We will free the error when we display it.
         createError(badCommentLine, EXIT_BAD_COMMENT_LINE, STR_BAD_COMMENT_LINE, path);
-
-    return badCommentLine;
+        return badCommentLine;
+    }
+    
+    free(badCommentLine);
+    return NULL;
 }
 
 
@@ -92,12 +111,18 @@ pgmErr* checkComment(char *comment, char *path)
  */
 pgmErr* checkCommentLimit(char *comment)
 {
-    pgmErr *commentLimitExceeded = NULL;
+    pgmErr *commentLimitExceeded = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (comment = NULL)
+    if (comment == NULL)
+    {
+        // We will free the error when we display it.
         createError(commentLimitExceeded, EXIT_MISC, STR_COMMENT_LIMIT, "");
+        return commentLimitExceeded;
+    }
 
-    return commentLimitExceeded;
+    // Error not triggered. Free it.
+    free(checkCommentLimit);
+    return NULL;
 }
 
 
@@ -106,21 +131,27 @@ pgmErr* checkCommentLimit(char *comment)
  */
 pgmErr* checkInvalidMagicNo(unsigned short *magicNo, char *path)
 {
-    pgmErr *invalidMagicNo = NULL;
+    pgmErr *invalidMagicNo = (pgmErr *) malloc(sizeof(pgmErr));
     
     if ((*magicNo != MAGIC_NUMBER_ASCII_PGM) || (*magicNo != MAGIC_NUMBER_RAW_PGM))
+    {
+        // We will free the error when we display it.
         createError(invalidMagicNo, EXIT_BAD_MAGIC_NUMBER, STR_BAD_MAGIC_NUMBER, path);
+        return invalidMagicNo;
+    }
 
-    return invalidMagicNo;
+    // Error not triggered. Free it.
+    free(invalidMagicNo);
+    return NULL;
 }
 
 
 /*
  *
  */
-pgmErr* checkInvalidDimensions(unsigned int width, unsigned int height, int scanned, char *path)
+pgmErr* checkInvalidDimensions(int width, int height, int scanned, char *path)
 {
-    pgmErr *invalidDimensions = NULL;
+    pgmErr *invalidDimensions = (pgmErr *) malloc(sizeof(pgmErr));
 
     /* 
      * We expect fscanf to have scanned 2 unsigned integers, one for width and height.
@@ -132,19 +163,23 @@ pgmErr* checkInvalidDimensions(unsigned int width, unsigned int height, int scan
         height < MIN_IMAGE_DIMENSION ||
         height > MAX_IMAGE_DIMENSION)
     {
-        // Create an error
+        // We will free the error when we display it.
         createError(invalidDimensions, EXIT_BAD_DIMENSIONS, STR_BAD_DIMENSIONS, path);
+        return invalidDimensions;
     }
-    return invalidDimensions;
+
+    // Error not triggered. Free it.
+    free(invalidDimensions);
+    return NULL;
 }
 
 
 /*
  *
  */
-pgmErr* checkInvalidMaxGrayValue(unsigned int maxGray, int scanned, char *path)
+pgmErr* checkInvalidMaxGrayValue(int maxGray, int scanned, char *path)
 {
-    pgmErr *invalidMaxGrayValue = NULL;
+    pgmErr *invalidMaxGrayValue = (pgmErr *) malloc(sizeof(pgmErr));
 
     /* 
      * We expect fscanf to have scanned 1 unsigned integer for maximum gray value.
@@ -152,10 +187,14 @@ pgmErr* checkInvalidMaxGrayValue(unsigned int maxGray, int scanned, char *path)
      */
     if (scanned != 1 || maxGray < MIN_GRAY_VALUE || maxGray > MAX_GRAY_VALUE)
     {
-        // Create an error
+        // We will free the error when we display it.
         createError(invalidMaxGrayValue, EXIT_BAD_MAX_GRAY_VALUE, STR_BAD_MAX_GRAY_VALUE, path);
+        return invalidMaxGrayValue;
     }
-    return invalidMaxGrayValue;
+
+    // Error not triggered. Free it.
+    free(invalidMaxGrayValue);
+    return NULL;
 }
 
 
@@ -164,12 +203,18 @@ pgmErr* checkInvalidMaxGrayValue(unsigned int maxGray, int scanned, char *path)
  */
 pgmErr* checkImageAllocated(pgmImage *image)
 {
-    pgmErr *imageNotAllocated = NULL;
+    pgmErr *imageNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (image == NULL)
+    {
+        // We will free the error when we display it.
         createError(imageNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+        return imageNotAllocated;
+    }
     
-    return imageNotAllocated;
+    // Error not triggered. Free it.
+    free(imageNotAllocated);
+    return NULL;
 }
 
 
@@ -178,7 +223,7 @@ pgmErr* checkImageAllocated(pgmImage *image)
  */
 pgmErr* checkRequiredData(pgmImage *image)
 {
-    pgmErr *rasterNotAllocated = NULL;
+    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (getWidth(image) < MIN_IMAGE_DIMENSION ||
         getWidth(image) > MAX_IMAGE_DIMENSION ||
@@ -187,10 +232,14 @@ pgmErr* checkRequiredData(pgmImage *image)
         getMaxGrayValue(image) < MIN_GRAY_VALUE ||
         getMaxGrayValue(image) > MAX_GRAY_VALUE)
     {
+        // We will free the error when we display it.
         createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+        return rasterNotAllocated;
     }
 
-    return rasterNotAllocated;
+    // Error not triggered. Free it.
+    free(rasterNotAllocated);
+    return NULL;
 }
 
 
@@ -199,40 +248,58 @@ pgmErr* checkRequiredData(pgmImage *image)
  */
 pgmErr* checkRasterAllocated(pgmImage *image)
 {
-    pgmErr *rasterNotAllocated = NULL;
+    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (getRaster(image) == NULL)
+    {
+        // We will free this error when we display it.
         createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+        return rasterNotAllocated;
+    }
 
-    return rasterNotAllocated;
+    // Error not triggered. Free it.
+    free(rasterNotAllocated);
+    return NULL;
 }
 
 
 /*
  *
  */
-pgmErr* checkPixel(unsigned int pixel, unsigned int maxGray, int scanned, char *path)
+pgmErr* checkPixel(unsigned short pixel, int maxGray, int scanned, char *path)
 {
-    pgmErr *badPixel = NULL;
+    pgmErr *badPixel = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (scanned != 1 || pixel > maxGray || pixel < MIN_GRAY_VALUE || pixel > MAX_GRAY_VALUE)
+    {
+        // We will free this error when we display it.
         createError(badPixel, EXIT_BAD_DATA, STR_BAD_DATA, path);
+        return badPixel;
+    }
 
-    return badPixel;
+    // Error not triggered. Free it.
+    free(badPixel);
+    return NULL;
 }
 
 
 /*
  *
  */
-pgmErr* checkPixelCount(int count, unsigned int expected, char *path)
+pgmErr* checkPixelCount(int count, int expected, char *path)
 {
-    pgmErr *missingPixels = NULL;
+    pgmErr *missingPixels = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (count != expected)
+    {
+        // We will free this error when we display it.
         createError(missingPixels, EXIT_BAD_DATA, STR_BAD_DATA, path);
+        return missingPixels;
+    }
 
-    return missingPixels;
+    // Error not triggered. Free it.
+    free(missingPixels);
+    return NULL;
 }
 
 
@@ -241,28 +308,42 @@ pgmErr* checkPixelCount(int count, unsigned int expected, char *path)
  */
 pgmErr* checkInvalidWriteMode(int mode)
 {
-    pgmErr *invalidWriteMode = NULL;
+    pgmErr *invalidWriteMode = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (mode < 0 || mode > 1)
+    {
+        // We will free this error when we display it.
         createError(invalidWriteMode, EXIT_MISC, STR_BAD_WRITE_MODE, "");
+        return invalidWriteMode;
+    }
 
-    return invalidWriteMode;
+    // Error not triggered. Free it.
+    free(invalidWriteMode);
+    return NULL;
 }
 
 
 /*
- *
+ * 
  */
 pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
 {
-    pgmErr *writeFailed = NULL;
+    pgmErr *writeFailed = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (image == NULL)
+    {
+        // We will free this error when we display it.
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
+        return writeFailed;
+    }
 
     // If the image is allocated but not its raster, create an error.
-    if (writeFailed == NULL && getRaster(image) == NULL)
+    if (getRaster(image) == NULL)
+    {
+        // We will free this error when we display it.
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
+        return writeFailed;
+    }
 
     // Check that the formatting, image dimensions, and maximum gray value are valid.
     if (determineFormat(image) < ASCII ||
@@ -274,25 +355,34 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
         getMaxGrayValue(image) < MIN_GRAY_VALUE ||
         getMaxGrayValue(image) > MAX_GRAY_VALUE)
     {
+        // We will free this error when we display it.
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
+        return writeFailed;
     }
 
-    return writeFailed;
+    // Error not triggered. Free it.
+    free(writeFailed);
+    return NULL;
 }
 
 
 /*
- *
+ * Frees memory allocated to an error pointer. This is called when displayError()
+ * is called.
  */
 static void freeError(pgmErr *err)
 {
-    free(err->errorMsg);
-    free(err);
+    if (err != NULL)
+    {
+        free(err->errorMsg);
+        free(err);
+    }
 }
 
 
 /*
- *
+ * Displays the occurrance of an error to the user, printing the error string
+ * and returning the exit code that should be used to exit the program with.
  */
 int displayError(pgmErr *err)
 {
