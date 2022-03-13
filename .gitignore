@@ -1,1 +1,4 @@
 *.o
+*.pdf
+pgmEchoCommented.c
+.vscode
