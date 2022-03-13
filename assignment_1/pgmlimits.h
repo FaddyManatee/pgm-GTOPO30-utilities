@@ -13,7 +13,7 @@
 #define MAX_GRAY_VALUE 65535
 #define MAX_COMMENTS 128
 #define MAX_COMMENT_LINE_LENGTH 128
-#define DEFAULT_VALUE 0
+#define DEFAULT_VALUE -1
 
 
 /* 
@@ -28,6 +28,7 @@
  * The most significant byte is first.
  */
 #define MAGIC_NUMBER_RAW_PGM 0x3550
+#define RAW 1
 
 
 /*
@@ -41,3 +42,4 @@
  * No line should be longer than 70 characters.
  */
 #define MAGIC_NUMBER_ASCII_PGM 0x3250
+#define ASCII 0

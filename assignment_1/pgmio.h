@@ -5,4 +5,5 @@
 extern pgmError *error;
 
 pgmImage* readImage(char *filePath);
-void writeImage(pgmImage *image, char *filePath);
+void echoImage(pgmImage *image, char *filePath);
+void writeImage(pgmImage *image, char *filePath, int binaryOrAscii);

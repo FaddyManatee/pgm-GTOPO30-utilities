@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     }
 
     // Write the data referenced by the image pointer to a new file.
-    writeFile(inputImage, argv[1]);
+    echoImage(inputImage, argv[1]);
 
     // If the external error pointer is no longer null, a file write error has been detected.
     if (error != NULL)
@@ -39,7 +39,8 @@ int main(int argc, char **argv)
         return displayError(error);
     }
 
-    // Display success string and exit the program
+    // Display success string and exit the program.
+    freeImage(inputImage);
     printf(STR_ECHOED);
     return EXIT_NO_ERRORS;
 }

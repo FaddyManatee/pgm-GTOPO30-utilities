@@ -5,6 +5,7 @@ pgmImage* createImage();
 int determineFormat(pgmImage *image);
 char* getComment(pgmImage *image, int lineNo);
 int getCommentExists(pgmImage *image, int lineNo);
+unsigned short getMagicNumber(pgmImage *image);
 unsigned int getWidth(pgmImage *image);
 unsigned int getHeight(pgmImage *image);
 unsigned int getMaxGrayValue(pgmImage *image);

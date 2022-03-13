@@ -247,6 +247,19 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
     if (writeFailed == NULL && getRaster(image) == DEFAULT_VALUE)
         createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
 
+    // Check that the formatting, image dimensions, and maximum gray value are valid.
+    if (determineFormat(image) < ASCII ||
+        determineFormat(image) > RAW ||
+        getWidth(image) < MIN_IMAGE_DIMENSION ||
+        getWidth(image) > MAX_IMAGE_DIMENSION ||
+        getHeight(image) < MIN_IMAGE_DIMENSION ||
+        getHeight(image) > MAX_IMAGE_DIMENSION ||
+        getMaxGrayValue(image) < MIN_GRAY_VALUE ||
+        getMaxGrayValue(image > MAX_GRAY_VALUE))
+    {
+        createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
+    }
+
     return writeFailed;
 }
 

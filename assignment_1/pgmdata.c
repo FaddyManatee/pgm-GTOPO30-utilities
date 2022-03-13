@@ -163,6 +163,12 @@ int getCommentExists(image *image, int lineNo)
 }
 
 
+unsigned short getMagicNumber(image *image)
+{
+    return image->magicNumber;
+}
+
+
 unsigned int getWidth(image *image)
 {
     return image->width;
@@ -273,10 +279,22 @@ void setPixel(image *image, unsigned int value, int pixelNo)
  */
 void freeImage(image* image)
 {
+    // Only free if the image is initialised.
     if (image != NULL)
     {
-        // Other frees required.
+        // Free memory allocated to comments.
+        int x;
+        for (x = 0; x < MAX_COMMENTS; x++)
+        {
+            free(image->comments[x].commentString);
+        }
         free(image->comments);
-        free(image);
+
+        // Free memory allocated to the image raster if it was allocated.
+        if (image->raster != NULL)
+        {
+            free(image->raster);
+            free(image);
+        }
     }
 }
