@@ -3,6 +3,7 @@
 #include "pgmlimits.h"
 #include "pgmerror.h"
 
+// Used to signal file errors to the programs that include this module.
 pgmError *error = NULL;
 
 /*
@@ -560,9 +561,6 @@ static void writeBinaryData(pgmImage *image, FILE *file)
             pixel = getPixel(image, x, y);
             fwrite(&pixel, bytesNeeded, 1, file);
         }
-
-        // Append a newline character before moving onto the next row in raster.
-        //fputs("\n", file);
     }
 }
 

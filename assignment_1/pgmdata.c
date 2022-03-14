@@ -169,19 +169,19 @@ unsigned short getMagicNumber(image *image)
 }
 
 
-unsigned int getWidth(image *image)
+int getWidth(image *image)
 {
     return image->width;
 }
 
 
-unsigned int getHeight(image *image)
+int getHeight(image *image)
 {
     return image->height;
 }
 
 
-unsigned int getMaxGrayValue(image *image)
+int getMaxGrayValue(image *image)
 {
     return image->maxGrayValue;
 }
@@ -193,7 +193,7 @@ unsigned short* getRaster(image *image)
 }
 
 
-unsigned int getBytes(image *image)
+int getBytes(image *image)
 {
     return image->bytes;
 }

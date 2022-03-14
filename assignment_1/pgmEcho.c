@@ -15,7 +15,7 @@ int main(int argc, char **argv)
      */
     if (argc != 3)
     {
-        printf("Usage: %s input_file output_file\n", argv[0]);
+        printf("Usage: %s inputImage.pgm outputImage.pgm\n", argv[0]);
         return EXIT_BAD_ARGS_COUNT;
     }
 
