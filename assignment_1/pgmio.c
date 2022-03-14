@@ -146,8 +146,8 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
     if (error != NULL)
         return;
 
-    unsigned int width = 0;
-    unsigned int height = 0;
+    int width = 0;
+    int height = 0;
 
     // Skip preceeding whitespace and read in width.
     int scanCount = fscanf(file, " %u", &width);
@@ -161,7 +161,7 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
         return;
     
     // Skip preceeding whitespace and read in height.
-    scanCount = fscanf(file, " %u", &height);
+    scanCount = scanCount + fscanf(file, " %u", &height);
     error = checkEOF(file);
     if (error != NULL)
         return;
@@ -191,7 +191,7 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *fileP
     if (error != NULL)
         return;
 
-    unsigned int maxGrayValue = 0;
+    int maxGrayValue = 0;
 
     // Skip preceding whitespace and read in max gray value.
     int scanCount = fscanf(file, " %u", &maxGrayValue);
@@ -222,7 +222,7 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
     int x;
     int scanCount = 0;
     int pixelsRead = 0;
-    unsigned int pixel = 0;
+    int pixel = 0;
 
     // Start reading the ASCII raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
@@ -230,10 +230,16 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
         // Skip preceding whitespace and read in next pixel in raster.
         scanCount = fscanf(file, " %u", &pixel);
 
-        // Check if we tried to read beyond the last item in the file.
-        error = checkEOF(file);
-        if (error != NULL)
-            return;
+        /* 
+         * Check if we tried to read beyond the last item in the file. Don't check
+         * on last pixel.
+         */
+        if (x != (getWidth(image) * getHeight(image)) - 1)
+        {
+            error = checkEOF(file);
+            if (error != NULL)
+                return;
+        }
 
         // Check that the pixel we read is within valid range.
         error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
@@ -614,7 +620,8 @@ void echoImage(pgmImage *image, char *filePath)
     goto cleanup;
 
     cleanup:
-    fclose(outputFile);
+    if (outputFile != NULL)
+        fclose(outputFile);
 }
 
 

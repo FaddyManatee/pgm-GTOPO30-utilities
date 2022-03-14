@@ -183,7 +183,7 @@ unsigned int getHeight(image *image)
 
 unsigned int getMaxGrayValue(image *image)
 {
-    return image->height;
+    return image->maxGrayValue;
 }
 
 

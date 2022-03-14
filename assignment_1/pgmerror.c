@@ -121,7 +121,7 @@ pgmErr* checkCommentLimit(char *comment)
     }
 
     // Error not triggered. Free it.
-    free(checkCommentLimit);
+    free(commentLimitExceeded);
     return NULL;
 }
 
@@ -133,7 +133,7 @@ pgmErr* checkInvalidMagicNo(unsigned short *magicNo, char *path)
 {
     pgmErr *invalidMagicNo = (pgmErr *) malloc(sizeof(pgmErr));
     
-    if ((*magicNo != MAGIC_NUMBER_ASCII_PGM) || (*magicNo != MAGIC_NUMBER_RAW_PGM))
+    if ((*magicNo != MAGIC_NUMBER_ASCII_PGM) && (*magicNo != MAGIC_NUMBER_RAW_PGM))
     {
         // We will free the error when we display it.
         createError(invalidMagicNo, EXIT_BAD_MAGIC_NUMBER, STR_BAD_MAGIC_NUMBER, path);
@@ -154,7 +154,7 @@ pgmErr* checkInvalidDimensions(int width, int height, int scanned, char *path)
     pgmErr *invalidDimensions = (pgmErr *) malloc(sizeof(pgmErr));
 
     /* 
-     * We expect fscanf to have scanned 2 unsigned integers, one for width and height.
+     * We expect fscanf to have scanned 2 integers, one for width and height.
      * We also expect the values for width and height fall within their valid range.
      */
     if (scanned != 2 ||
@@ -270,7 +270,7 @@ pgmErr* checkPixel(unsigned short pixel, int maxGray, int scanned, char *path)
 {
     pgmErr *badPixel = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (scanned != 1 || pixel > maxGray || pixel < MIN_GRAY_VALUE || pixel > MAX_GRAY_VALUE)
+    if (scanned != 1 || pixel > maxGray || pixel < MIN_PIXEL_VALUE || pixel > MAX_GRAY_VALUE)
     {
         // We will free this error when we display it.
         createError(badPixel, EXIT_BAD_DATA, STR_BAD_DATA, path);
