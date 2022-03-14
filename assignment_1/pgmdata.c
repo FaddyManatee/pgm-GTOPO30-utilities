@@ -224,6 +224,8 @@ char* setComment(image *image, int lineNo)
             continue;
         }
 
+        // Flag indexed comment as existing and return the memory address to store it in. 
+        image->comments[x].exists = 1;
         return image->comments[x].commentString;
     }
 

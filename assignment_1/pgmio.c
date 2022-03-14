@@ -257,6 +257,7 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 {
     int x;
     int scanCount = 0;
+    int pixelsRead = 0;
     unsigned short pixel = 0;
 
     // Determine how many bytes a pixel uses. 
@@ -283,11 +284,11 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 
         // Set the value if check passes.
         setPixel(image, pixel, x);
-        scanCount++;
+        pixelsRead++;
     }
 
     // Check that the number of pixels read matched the dimensions.
-    error = checkPixelCount(scanCount, getWidth(image) * getHeight(image), path);
+    error = checkPixelCount(pixelsRead, getWidth(image) * getHeight(image), path);
 }
 
 
@@ -538,7 +539,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
     int height = getHeight(image);
 
     int bytesNeeded = getBytes(image);
-    short pixel = 0;
+    unsigned short pixel = 0;
 
     int x;
     int y;
