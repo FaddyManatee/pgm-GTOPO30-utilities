@@ -274,7 +274,6 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
     // Start reading the binary raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
     {
-        // ENDIANNESS?
         scanCount = fread(&pixel, bytesNeeded, 1, file);
 
         // Check that the requested number of bytes was read.
@@ -557,9 +556,31 @@ static void writeBinaryData(pgmImage *image, FILE *file)
     {
         for (y = 0; y < width; y++)
         {
-            // ENDIANNESS?
-            pixel = getPixel(image, x, y);
-            fwrite(&pixel, bytesNeeded, 1, file);
+            // Little Endian
+            if (bytesNeeded == 1)
+            {
+                // 0 <= pixel (unsigned short) <= 255. We can use the first byte.
+                pixel = getPixel(image, x, y);
+                fwrite(&pixel, 1, 1, file);
+            }
+            else if (bytesNeeded == 2)
+            {
+                /*
+                 * 256 <= pixel (unsigned short) <= 65535. We need two bytes, and
+                 * the most significant byte (MSB) should be first. We now read the most
+                 * significant byte.
+                 */
+                pixel = getPixel(image, x, y);
+
+                // Get the address in memory to the where the pixel of type unsigned short is stored.
+                unsigned short *pixelPointer = &pixel;
+                // Get byte after the start of this address. This will be the MSB with little endian. 
+                fwrite(pixelPointer + sizeof(unsigned char), 1, 1, file);
+
+                // Now read the least significant byte.
+                pixel = getPixel(image, x, y);
+                fwrite(&pixel, 1, 1, file);
+            }
         }
     }
 }
