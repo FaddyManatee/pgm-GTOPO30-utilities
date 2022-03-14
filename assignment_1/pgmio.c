@@ -10,14 +10,19 @@ pgmError *error = NULL;
  */
 static void detectNewLine(FILE *file, int *line, char *path)
 {
-    int scanCount = fscanf(file, " \n");
-    error = checkEOF(file, path);
-    if (error != NULL)
-        return;
-
-    if (scanCount == 1)
+    char x = 0;
+    while (x = fgetc(file))
     {
-        *line++;
+        if (x == '\n')
+        {
+            (*line)++;
+            return;
+        }
+        else if (x != ' ')
+        {
+            ungetc(x, file);
+            return;
+        }
     }
 }
 
@@ -63,8 +68,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *path)
                 return;
 
             // Increment line number by one. We have read a comment line.
-            *line++;
-            return;
+            (*line)++;
         }
         else
         {
@@ -120,7 +124,7 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *path)
         return;
 
     // Increment line number by one. We have read a line.
-    *line++;
+    (*line)++;
 
     // Set these bytes and determine formatting of raster if check passes.
     if (*magicNumberBytes == MAGIC_NUMBER_RAW_PGM)
@@ -449,7 +453,7 @@ static void writeCommentLines(pgmImage *image, FILE *file, int *line)
     {
         // Avoid incrementing line number on first iteration.
         if (count > 0)
-            *line++;
+            (*line)++;
 
         // Get the comment string that was read at the specified line. 
         char *comment = getComment(image, *line);
@@ -457,10 +461,11 @@ static void writeCommentLines(pgmImage *image, FILE *file, int *line)
         // Write the comment to the file if not NULL. Comments are already terminated with \n.
         if (comment != NULL)
             fputs(comment, file);
+            (*line)++;
 
         count++;
         // Loop while there exists a comment on the next line.
-    } while (getCommentExists(image, *line + 1) == 1);
+    } while (getCommentExists(image, *line) == 1);
 }
 
 
@@ -481,21 +486,21 @@ static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
     {
         fputs("P5\n", file);
     }
-    *line++;
+    (*line)++;
 
     // Write comment lines that appear before dimensions.
     writeCommentLines(image, file, line);
 
     // Write the dimensions.
     fprintf(file, "%u %u\n", getWidth(image), getHeight(image));
-    *line++;
+    (*line)++;
 
     // Write comment lines that appear before maximum gray value.
     writeCommentLines(image, file, line);
 
     // Write the maximum gray value.
     fprintf(file, "%u\n", getMaxGrayValue(image));
-    *line++;
+    (*line)++;
 
     // Write comment lines that appear before the raster. Line number no longer needed.
     writeCommentLines(image, file, line);
@@ -518,10 +523,14 @@ static void writeAsciiData(pgmImage *image, FILE *file)
         {
             // For the first pixel or first pixel in a row, write without preceding whitespace.
             if ((x == 0 && y == 0) || y == 0)
+            {
                 fprintf(file, "%u", getPixel(image, x, y));
-
-            // Write remaining pixels padded with whitespace.
-            fprintf(file, " %u", getPixel(image, x, y));
+            }
+            else
+            {
+                // Write other pixels padded with whitespace.
+                fprintf(file, " %u", getPixel(image, x, y));
+            }
         }
 
         // Append a newline character before moving onto the next row in raster.
@@ -553,7 +562,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
         }
 
         // Append a newline character before moving onto the next row in raster.
-        fputs("\n", file);
+        //fputs("\n", file);
     }
 }
 
@@ -585,8 +594,15 @@ static void imageWriteChecks(pgmImage *image, FILE *file, char *path, int choice
  */
 void echoImage(pgmImage *image, char *filePath)
 {
-    int *lineNumber;
     error = NULL;
+
+    // Record line number so that we can track comment positions before raster data.
+    int line;
+    int *lineNumber;
+
+    // Initial line number.
+    line = 0;
+    lineNumber = &line;
 
     FILE *outputFile = fopen(filePath, "wb");
 
@@ -627,8 +643,15 @@ void echoImage(pgmImage *image, char *filePath)
  */
 void convert(pgmImage *image, char *filePath, int binaryOrAscii)
 {
-    int *lineNumber;
     error = NULL;
+
+    // Record line number so that we can track comment positions before raster data.
+    int line;
+    int *lineNumber;
+
+    // Initial line number.
+    line = 0;
+    lineNumber = &line;
 
     FILE *outputFile = fopen(filePath, "wb");
 

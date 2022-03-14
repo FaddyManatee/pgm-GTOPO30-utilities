@@ -224,8 +224,12 @@ char* setComment(image *image, int lineNo)
             continue;
         }
 
-        // Flag indexed comment as existing and return the memory address to store it in. 
+        /* 
+         * Flag indexed comment as existing, set its line nunmber, and return the
+         * memory address to store it in. 
+         */
         image->comments[x].exists = 1;
+        image->comments[x].lineNumber = lineNo;
         return image->comments[x].commentString;
     }
 
