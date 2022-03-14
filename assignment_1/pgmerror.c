@@ -52,14 +52,14 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
 /*
  *
  */
-pgmErr* checkEOF(FILE *file)
+pgmErr* checkEOF(FILE *file, char *path)
 {
     pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (feof(file))
     {
         // We will free the error when we display it.
-        createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
+        createError(eofDetected, EXIT_BAD_DATA, STR_BAD_DATA, path);
         return eofDetected;
     }
     
@@ -71,14 +71,14 @@ pgmErr* checkEOF(FILE *file)
 /*
  *
  */
-pgmErr* checkBinaryEOF(int scanned)
+pgmErr* checkBinaryEOF(int scanned, char *path)
 {
     pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
 
     if (scanned == 0)
     {
         // We will free the error when we display it.
-        createError(eofDetected, EXIT_MISC, STR_MISC, STR_EOF);
+        createError(eofDetected, EXIT_BAD_DATA, STR_BAD_DATA, path);
         return eofDetected;
     }
     

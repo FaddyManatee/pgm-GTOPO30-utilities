@@ -38,6 +38,5 @@
 
 #define EXIT_MISC 100
 #define STR_MISC "ERROR: Miscellaneous:"
-#define STR_EOF "End of file was reached before expected data was read"
 #define STR_BAD_WRITE_MODE "Invalid write mode. Must either be 0 or 1"
 #define STR_COMMENT_LIMIT "Comment limit was reached"

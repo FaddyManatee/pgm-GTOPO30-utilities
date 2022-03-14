@@ -8,10 +8,10 @@ pgmError *error = NULL;
 /*
  * Detects that a newline character exists at the end of a line. Can return an error.
  */
-static void detectNewLine(FILE *file, int *line)
+static void detectNewLine(FILE *file, int *line, char *path)
 {
     int scanCount = fscanf(file, " \n");
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
@@ -26,7 +26,7 @@ static void detectNewLine(FILE *file, int *line)
  * Checks for a comment line or sequential comment lines and reads them. Can
  * return an error.
  */
-static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
+static void readComments(pgmImage *image, int *line, FILE *file, char *path)
 {
     char nextChar = 0;
     do
@@ -36,7 +36,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
 
         // Get the next character from file to examine.
         nextChar = fgetc(file);
-        error = checkEOF(file);
+        error = checkEOF(file, path);
         if (error != NULL)
             return;
 
@@ -58,7 +58,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
             char *commentString = fgets(commentBuffer, MAX_COMMENT_LINE_LENGTH, file);
 
             // Check that the comment read was successful.
-            error = checkComment(commentString, filePath);
+            error = checkComment(commentString, path);
             if (error != NULL)
                 return;
 
@@ -79,7 +79,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *filePath)
 /*
  * Reads the magic number of the image. Can return an error.
  */
-static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePath)
+static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *path)
 {
     // Check if image is allocated.
     error = checkImageAllocated(image);
@@ -91,23 +91,23 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePa
     // Skip any amount of whitespace before non-whitespace characters.
     fscanf(file, " ");
     // Stop reading if end of file is reached.
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
     // Read in the two magic number characters.
     magicNumber[0] = fgetc(file);
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
     magicNumber[1] = fgetc(file);
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
     
     // Check for a new line character
-    detectNewLine(file, line);
+    detectNewLine(file, line, path);
     if (error != NULL)
         return;
 
@@ -115,7 +115,7 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePa
     unsigned short *magicNumberBytes = (unsigned short *) magicNumber;
     
     // Check that these bytes are valid.
-    error = checkInvalidMagicNo(magicNumberBytes, filePath);
+    error = checkInvalidMagicNo(magicNumberBytes, path);
     if (error != NULL)
         return;
 
@@ -139,7 +139,7 @@ static void readMagicNumber(pgmImage *image, int *line, FILE *file, char *filePa
 /*
  * Reads the width and height of the image. Can return an error.
  */
-static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePath)
+static void readDimensions(pgmImage *image, int *line, FILE *file, char *path)
 {
     // Check if image is allocated.
     error = checkImageAllocated(image);
@@ -151,28 +151,28 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
 
     // Skip preceeding whitespace and read in width.
     int scanCount = fscanf(file, " %u", &width);
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
     // Check for a newline character.
-    detectNewLine(file, line);
+    detectNewLine(file, line, path);
     if (error != NULL)
         return;
     
     // Skip preceeding whitespace and read in height.
     scanCount = scanCount + fscanf(file, " %u", &height);
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
     // Check for a newline character.
-    detectNewLine(file, line);
+    detectNewLine(file, line, path);
     if (error != NULL)
         return;
 
     // Check that width and height are valid.
-    error = checkInvalidDimensions(width, height, scanCount, filePath);
+    error = checkInvalidDimensions(width, height, scanCount, path);
     if (error != NULL)
         return;
 
@@ -184,7 +184,7 @@ static void readDimensions(pgmImage *image, int *line, FILE *file, char *filePat
 /*
  * Reads maximum gray value. Can return an error.
  */
-static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *filePath)
+static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *path)
 {
     // Check if image is allocated.
     error = checkImageAllocated(image);
@@ -195,17 +195,17 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *fileP
 
     // Skip preceding whitespace and read in max gray value.
     int scanCount = fscanf(file, " %u", &maxGrayValue);
-    error = checkEOF(file);
+    error = checkEOF(file, path);
     if (error != NULL)
         return;
 
     // Check for a newline character.
-    detectNewLine(file, line);
+    detectNewLine(file, line, path);
     if (error != NULL)
         return;
 
     // Check that the maximum gray value is valid.
-    error = checkInvalidMaxGrayValue(maxGrayValue, scanCount, filePath);
+    error = checkInvalidMaxGrayValue(maxGrayValue, scanCount, path);
     if (error != NULL)
         return;
 
@@ -227,19 +227,12 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
     // Start reading the ASCII raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
     {
+        error = checkEOF(file, path);
+        if (error != NULL)
+            return;
+
         // Skip preceding whitespace and read in next pixel in raster.
         scanCount = fscanf(file, " %u", &pixel);
-
-        /* 
-         * Check if we tried to read beyond the last item in the file. Don't check
-         * on last pixel.
-         */
-        if (x != (getWidth(image) * getHeight(image)) - 1)
-        {
-            error = checkEOF(file);
-            if (error != NULL)
-                return;
-        }
 
         // Check that the pixel we read is within valid range.
         error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
@@ -253,7 +246,7 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
     }
 
     // Check that the number of pixels read matched the dimensions.
-    error = checkPixelCount(scanCount, getWidth(image) * getHeight(image), path);
+    error = checkPixelCount(pixelsRead, getWidth(image) * getHeight(image), path);
 }
 
 
@@ -279,7 +272,7 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
         scanCount = fread(&pixel, bytesNeeded, 1, file);
 
         // Check that the requested number of bytes was read.
-        error = checkBinaryEOF(scanCount);
+        error = checkBinaryEOF(scanCount, path);
         if (error != NULL)
             return;
 
@@ -522,8 +515,8 @@ static void writeAsciiData(pgmImage *image, FILE *file)
     {
         for (y = 0; y < width; y++)
         {
-            // For the first pixel, write without preceding whitespace.
-            if (x == 0 && y == 0)
+            // For the first pixel or first pixel in a row, write without preceding whitespace.
+            if ((x == 0 && y == 0) || y == 0)
                 fprintf(file, "%u", getPixel(image, x, y));
 
             // Write remaining pixels padded with whitespace.
@@ -545,7 +538,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
     int height = getHeight(image);
 
     int bytesNeeded = getBytes(image);
-    unsigned short pixel = 0;
+    short pixel = 0;
 
     int x;
     int y;
@@ -631,7 +624,7 @@ void echoImage(pgmImage *image, char *filePath)
  * the output file should be in ASCII format, whilst a value of 1 indicates that
  * the output file should be in binary format. Can return an error.
  */
-void writeImage(pgmImage *image, char *filePath, int binaryOrAscii)
+void convert(pgmImage *image, char *filePath, int binaryOrAscii)
 {
     int *lineNumber;
     error = NULL;
