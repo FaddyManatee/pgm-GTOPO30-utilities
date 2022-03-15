@@ -21,7 +21,8 @@ typedef struct pgmErr
  */
 static void createError(pgmErr *err, int code, char *prefix , char *string)
 {
-    err->errorMsg = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(string) + 3));
+    // Allocate enough memory to the error string and build it.
+    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string), sizeof(char));
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");
@@ -45,6 +46,20 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
     }
 
     free(invalidFileName);
+    return NULL;
+}
+
+
+pgmErr* checkInvalidFactor(int scanCount)
+{
+    pgmErr *invalidFactor = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (scanCount == 0)
+    {
+        createError(invalidFactor, EXIT_MISC, STR_MISC, STR_BAD_FACTOR);
+    }
+
+    free(invalidFactor);
     return NULL;
 }
 

@@ -38,5 +38,6 @@
 
 #define EXIT_MISC 100
 #define STR_MISC "ERROR: Miscellaneous:"
-#define STR_BAD_WRITE_MODE "Invalid write mode. Must either be 0 or 1"
-#define STR_COMMENT_LIMIT "Comment limit was reached"
+#define STR_BAD_WRITE_MODE "Invalid write mode. Must either be 0 or 1\n"
+#define STR_COMMENT_LIMIT "Comment limit was reached\n"
+#define STR_BAD_FACTOR "Factor was not an integer\n"

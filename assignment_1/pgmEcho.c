@@ -29,7 +29,7 @@ int main(int argc, char **argv)
         return displayError(error);
     }
 
-    // Write the data referenced by the image pointer to a new file.
+    // Write the data referenced by the image pointer to a new file with same formatting.
     echoImage(inputImage, argv[2]);
 
     // If the external error pointer is no longer null, a file write error has been detected.

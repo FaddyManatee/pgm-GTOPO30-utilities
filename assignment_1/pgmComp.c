@@ -35,6 +35,7 @@ int main(int argc, char **argv)
     // If the external error pointer is no longer null, a file read error has been detected.
     if (error != NULL)
     {
+        freeImage(inputImageOne);
         freeImage(inputImageTwo);
         return displayError(error);
     }

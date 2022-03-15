@@ -524,8 +524,11 @@ static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
     fprintf(file, "%u\n", getMaxGrayValue(image));
     (*line)++;
 
-    // Write comment lines that appear before the raster. Line number no longer needed.
-    writeCommentLines(image, file, line);
+    /*
+     * Do not write comment lines that appear fight before the raster. This causes
+     * issues with programs that read pgm files. The specification also states that
+     * comments directly before the raster are not permitted.
+     */
 }
 
 

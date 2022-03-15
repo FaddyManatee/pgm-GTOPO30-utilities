@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 typedef struct pgmErr pgmError;
 
 pgmError* checkInvalidFileName(FILE *file, char *path);
