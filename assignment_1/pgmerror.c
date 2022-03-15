@@ -49,14 +49,17 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
     return NULL;
 }
 
-
-pgmErr* checkInvalidFactor(int scanCount)
+/*
+ * Checks whether the argument for factor is greater than 0.
+ */
+pgmErr* checkInvalidFactor(int factor, char lastChar)
 {
     pgmErr *invalidFactor = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (scanCount == 0)
+    if (factor <= 0 || lastChar != '\0')
     {
         createError(invalidFactor, EXIT_MISC, STR_MISC, STR_BAD_FACTOR);
+        return invalidFactor;
     }
 
     free(invalidFactor);

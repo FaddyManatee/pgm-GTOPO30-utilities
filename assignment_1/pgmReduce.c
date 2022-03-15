@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 // Includes pgmio.h. We can use pgm input/output functions and track the external error.
-#include "pgmcrop.h"
+#include "pgmshrink.h"
 
 int main(int argc, char **argv)
 {
@@ -20,9 +21,13 @@ int main(int argc, char **argv)
         return EXIT_BAD_ARGS_COUNT;
     }
 
-    // Check that the factor is valid. Has to be an integer.
-    int factor = 0;
-    error = checkInvalidFactor(scanf("%d", &factor));
+    /* 
+     * Convert the factor CLI argument to an integer. Check that the factor is valid.
+     * Has to be an integer greater than one.
+     */
+    char *end;
+    int factor = strtol(argv[2], &end, 10);
+    error = checkInvalidFactor(factor, *end);
     if (error != NULL)
         return displayError(error);
 
@@ -36,15 +41,8 @@ int main(int argc, char **argv)
         return displayError(error);
     }
 
+    // If checks pass, reduce the image.
     pgmImage *reducedImage = reduce(inputImage, factor);
-
-    // If the external error pointer is no longer null, we couldn't reduce using the factor.
-    if (error != NULL)
-    {
-        freeImage(inputImage);
-        freeImage(reducedImage);
-        return displayError(error);
-    }
 
     // Write the data referenced by the reduced image pointer to a new file with same formatting.
     echoImage(reducedImage, argv[3]);
@@ -53,7 +51,7 @@ int main(int argc, char **argv)
     if (error != NULL)
     {
         freeImage(inputImage);
-        freeImage(readImage);
+        freeImage(reducedImage);
         return displayError(error);
     }
 
