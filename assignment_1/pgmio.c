@@ -273,13 +273,35 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 
     // Start reading the binary raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
-    {
-        scanCount = fread(&pixel, bytesNeeded, 1, file);
+    {   
+        if (bytesNeeded == 1)
+        {
+            scanCount = fread(&pixel, 1, 1, file);
 
-        // Check that the requested number of bytes was read.
-        error = checkBinaryEOF(scanCount, path);
-        if (error != NULL)
-            return;
+            // Check that the requested number of bytes was read.
+            error = checkBinaryEOF(scanCount, path);
+            if (error != NULL)
+                return;
+        }
+        else if (bytesNeeded == 2)
+        {
+            unsigned char pixelMSBLast[2];
+            scanCount = fread(pixelMSBLast, 1, 1, file);
+
+            // Check that the requested number of bytes was read.
+            error = checkBinaryEOF(scanCount, path);
+            if (error != NULL)
+                return;
+            
+            scanCount = fread(pixelMSBLast, 1, 1, file);
+
+            // Check that the requested number of bytes was read.
+            error = checkBinaryEOF(scanCount, path);
+            if (error != NULL)
+                return;
+
+            pixel = *((unsigned short *) pixelMSBLast);
+        }
 
         // Check that the pixel we read is within valid range.
         error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
@@ -574,6 +596,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
 
                 // Get the address in memory to the where the pixel of type unsigned short is stored.
                 unsigned short *pixelPointer = &pixel;
+                
                 // Get byte after the start of this address. This will be the MSB with little endian. 
                 fwrite(pixelPointer + sizeof(unsigned char), 1, 1, file);
 
