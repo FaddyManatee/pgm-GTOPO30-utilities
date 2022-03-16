@@ -131,21 +131,19 @@ int main(int argc, char **argv)
 
     int row;
     int column;
-    int tileNumber;
-    for (tileNumber = 0; tileNumber < factor * factor; tileNumber++)
+    int tileNumber = 0;
+    for (row = 0; row < factor; row++)
     {
-        for (row = 0; row < factor; row++)
+        for (column = 0; column < factor; column++)
         {
-            for (column = 0; column < factor; column++)
+            echoImage(tiledImage[tileNumber], buildPath(argv[3], row, column));
+            if (error != NULL)
             {
-                echoImage(tiledImage[tileNumber], buildPath(argv[3], row, column));
-                if (error != NULL)
-                {
-                    free(inputImage);
-                    freeTiles(tiledImage, factor);
-                    return displayError(error);
-                }
+                free(inputImage);
+                freeTiles(tiledImage, factor);
+                return displayError(error);
             }
+            tileNumber++;
         }
     }
 

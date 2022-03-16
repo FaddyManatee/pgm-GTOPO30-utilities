@@ -85,14 +85,11 @@ pgmImage** tile(pgmImage *image, int factor)
     {
         for (column = 0; column < factor - 1; column++)
         {
-            // printf("Relative position of large image (row column): %d %d\n", row, column);
             for (subRow = 0; subRow < getHeight(imageTiles[tileNumber]) - 1; subRow++)
             {
                 for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]) - 1; subColumn++)
                 {
-                    // printf("Tile number: %d\n", tileNumber);
-                    // printf("Tile pixel position: %d %d\n\n", subRow, subColumn);
-                    setPixel(imageTiles[tileNumber], getPixel(image, (row * (getHeight(image) - 1)) + subRow, (column * (getWidth(image) - 1)) + subColumn), tilePixel);
+                    setPixel(imageTiles[tileNumber], getPixel(image, subRow * (row + 1), subColumn * (column + 1)), tilePixel);
                     tilePixel++;
                 }
             }
