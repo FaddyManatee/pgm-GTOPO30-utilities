@@ -5,6 +5,7 @@ typedef struct pgmErr pgmError;
 pgmError* checkInvalidFileName(FILE *file, char *path);
 pgmError* checkInvalidWriteMode(int mode);
 pgmError* checkInvalidFactor(int scanned, char lastChar);
+pgmError* checkTagsPresent(char *rowTag, char *columnTag);
 pgmError* checkImageCanBeWritten(pgmImage *image, char *path);
 pgmError* checkEOF(FILE *file, char *path);
 pgmError* checkBinaryEOF(int scanned, char *path);

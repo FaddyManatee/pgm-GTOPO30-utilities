@@ -70,6 +70,34 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
 /*
  *
  */
+pgmErr* checkTagsPresent(char *rowTag, char *columnTag)
+{
+    pgmErr *tagMissing = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (rowTag == NULL && columnTag == NULL)
+    {
+        createError(tagMissing, EXIT_MISC, STR_NO_TAGS, "");
+        return tagMissing;
+    }
+    else if (rowTag == NULL)
+    {
+        createError(tagMissing, EXIT_MISC, STR_NO_ROW_TAG, "");
+        return tagMissing;
+    }
+    else if (columnTag == NULL)
+    {
+        createError(tagMissing, EXIT_MISC, STR_NO_COL_TAG, "");
+        return tagMissing;
+    }
+
+    free(tagMissing);
+    return NULL;
+}
+
+
+/*
+ *
+ */
 pgmErr* checkEOF(FILE *file, char *path)
 {
     pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));

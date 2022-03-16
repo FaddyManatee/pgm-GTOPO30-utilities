@@ -540,21 +540,21 @@ static void writeAsciiData(pgmImage *image, FILE *file)
     int width = getWidth(image);
     int height = getHeight(image);
 
-    int x;
-    int y;
-    for (x = 0; x < height; x++)
+    int row;
+    int column;
+    for (row = 0; row < height; row++)
     {
-        for (y = 0; y < width; y++)
+        for (column = 0; column < width; column++)
         {
             // For the first pixel or first pixel in a row, write without preceding whitespace.
-            if ((x == 0 && y == 0) || y == 0)
+            if ((row == 0 && column == 0) || column == 0)
             {
-                fprintf(file, "%u", getPixel(image, x, y));
+                fprintf(file, "%u", getPixel(image, row, column));
             }
             else
             {
                 // Write other pixels padded with whitespace.
-                fprintf(file, " %u", getPixel(image, x, y));
+                fprintf(file, " %u", getPixel(image, row, column));
             }
         }
 
@@ -575,17 +575,17 @@ static void writeBinaryData(pgmImage *image, FILE *file)
     int bytesNeeded = getBytes(image);
     unsigned short pixel = 0;
 
-    int x;
-    int y;
-    for (x = 0; x < height; x++)
+    int row;
+    int column;
+    for (row = 0; row < height; row++)
     {
-        for (y = 0; y < width; y++)
+        for (column = 0; column < width; column++)
         {
             // Little Endian
             if (bytesNeeded == 1)
             {
                 // 0 <= pixel (unsigned short) <= 255. We can use the first byte.
-                pixel = getPixel(image, x, y);
+                pixel = getPixel(image, row, column);
                 fwrite(&pixel, 1, 1, file);
             }
             else if (bytesNeeded == 2)
@@ -595,7 +595,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
                  * the most significant byte (MSB) should be first. We now read the most
                  * significant byte.
                  */
-                pixel = getPixel(image, x, y);
+                pixel = getPixel(image, row, column);
 
                 // Get the address in memory to the where the pixel of type unsigned short is stored.
                 unsigned short *pixelPointer = &pixel;
@@ -604,7 +604,7 @@ static void writeBinaryData(pgmImage *image, FILE *file)
                 fwrite(pixelPointer + sizeof(unsigned char), 1, 1, file);
 
                 // Now read the least significant byte.
-                pixel = getPixel(image, x, y);
+                pixel = getPixel(image, row, column);
                 fwrite(&pixel, 1, 1, file);
             }
         }

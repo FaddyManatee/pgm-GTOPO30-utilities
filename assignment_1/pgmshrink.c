@@ -6,7 +6,8 @@ static pgmImage* initialiseReduced(pgmImage *image, int factor)
     setMagicNumber(reduced, getMagicNumber(image), determineFormat(image));
     setDimensions(reduced, (getWidth(image) / factor), (getHeight(image) / factor));
     setMaxGrayValue(reduced, getMaxGrayValue(image));
-    // Comments?
+
+    // We now have enough information to initialise the raster.
     initImageRaster(reduced);
 
     return reduced;
@@ -19,15 +20,15 @@ pgmImage* reduce(pgmImage *inputImage, int factor)
 
     unsigned short pixel = 0;
     int count = 0;
-    int x;
-    int y;
-    for (x = 0; x < getHeight(inputImage); x++)
+    int row;
+    int column;
+    for (row = 0; row < getHeight(inputImage); row++)
     {
-        for (y = 0; y < getWidth(inputImage); y++)
+        for (column = 0; column < getWidth(inputImage); column++)
         {
-            pixel = getPixel(inputImage, x, y);
+            pixel = getPixel(inputImage, row, column);
             
-            if (x % factor == 0 && y % factor == 0 && count <= getWidth(reducedImage) * getHeight(reducedImage))
+            if (row % factor == 0 && column % factor == 0 && count <= getWidth(reducedImage) * getHeight(reducedImage))
             {
                 setPixel(reducedImage, pixel, count);
                 count++;
