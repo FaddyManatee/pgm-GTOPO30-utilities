@@ -24,10 +24,7 @@ char* buildPath(char *format, int rowNumber, int columnNumber)
 
     // Copy the output file path format so that we can manipulate it.
     char *template = (char *) malloc(sizeof(char) * strlen(format) + 1);
-    for (x = 0; x < strlen(template) + 1; x++)
-    {
-        template[x] = format[x];
-    }
+    strcpy(template, format);
 
     char row[10];
     sprintf(row, "%d", rowNumber);
@@ -39,20 +36,24 @@ char* buildPath(char *format, int rowNumber, int columnNumber)
     char *rowTagStart = strstr(template, ROW_TAG);
     char *columnTagStart = strstr(template, COL_TAG);
 
-    // Set the memory of <row> to -1 to identify it.
+    // Set the memory of <row> to -1 to identify it for replacement.
     for (x = 0; x < strlen(ROW_TAG); x++)
     {
-        rowTagStart[x] = -1;
+        rowTagStart[x] = '\377';
     }
 
-    // Set the memory of <column> in the template to -2 to identify it.
+    // Set the memory of <column> in the template to -2 to identify it for replacement.
     for (x = 0; x < strlen(COL_TAG); x++)
     {
-        columnTagStart[x] = -2;
+        columnTagStart[x] = '\376';
     }
 
+    /*
+     * Allocate memory to the path string to return, zeroed by calloc to avoid corrupted
+     * file names that are difficult to delete.
+     */
     int pathLength = strlen(template) + strlen(row) + strlen(column) - (strlen(ROW_TAG) - strlen(COL_TAG));
-    char *path = (char *) malloc(sizeof(char) * pathLength);
+    char *path = (char *) calloc(pathLength, sizeof(char));
 
     int rowWritten = 0;
     int columnWritten = 0;
@@ -61,15 +62,18 @@ char* buildPath(char *format, int rowNumber, int columnNumber)
         char currentChar[2] = {template[x], '\0'};
         if (template[x] != '\377' && template[x] != '\376')
         {
+            // The current character isn't part of a tag. Append the character.
             strcat(path, currentChar);
         }
         else if (template[x] == '\377' && rowWritten == 0)
         {
+            // Current character is -1, flagging position of <row> tag. Append row number.
             strcat(path, row);
             rowWritten = 1;
         }
         else if (template[x] == '\376' && columnWritten == 0)
         {
+            // Current character is -2, flagging position of <column> tag. Append column number.
             strcat(path, column);
             columnWritten = 1;
         }
@@ -136,7 +140,8 @@ int main(int argc, char **argv)
     {
         for (column = 0; column < factor; column++)
         {
-            echoImage(tiledImage[tileNumber], buildPath(argv[3], row, column));
+            char *path = buildPath(argv[3], row, column);
+            echoImage(tiledImage[tileNumber], path);
             if (error != NULL)
             {
                 free(inputImage);
@@ -144,6 +149,9 @@ int main(int argc, char **argv)
                 return displayError(error);
             }
             tileNumber++;
+
+            // Memory was allocated to path via buildPath, free it.
+            free(path);
         }
     }
 
