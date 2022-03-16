@@ -76,17 +76,17 @@ pgmErr* checkTagsPresent(char *rowTag, char *columnTag)
 
     if (rowTag == NULL && columnTag == NULL)
     {
-        createError(tagMissing, EXIT_MISC, STR_NO_TAGS, "");
+        createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_TAGS);
         return tagMissing;
     }
     else if (rowTag == NULL)
     {
-        createError(tagMissing, EXIT_MISC, STR_NO_ROW_TAG, "");
+        createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_ROW_TAG);
         return tagMissing;
     }
     else if (columnTag == NULL)
     {
-        createError(tagMissing, EXIT_MISC, STR_NO_COL_TAG, "");
+        createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_COL_TAG);
         return tagMissing;
     }
 

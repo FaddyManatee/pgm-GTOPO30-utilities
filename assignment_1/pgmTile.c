@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define ROW_TAG "<row>"
+#define COL_TAG "<column>"
+
 // Includes pgmio.h. We can use pgm input/output functions and track the external error.
 #include "pgmgroup.h"
 
@@ -14,54 +17,65 @@ void freeTiles(pgmImage **tiles, int factor)
     }
 }
 
-char* buildPath(char *template, int rowNumber, int columnNumber)
+char* buildPath(char *format, int rowNumber, int columnNumber)
 {
-    char *row;
+    // Counter variable.
+    int x;
+
+    // Copy the output file path format so that we can manipulate it.
+    char *template = (char *) malloc(sizeof(char) * strlen(format) + 1);
+    for (x = 0; x < strlen(template) + 1; x++)
+    {
+        template[x] = format[x];
+    }
+
+    char row[10];
     sprintf(row, "%d", rowNumber);
 
-    char *column;
+    char column[10];
     sprintf(column, "%d", columnNumber);
 
     // Get starting address of <row> and <column>
-    char *rowTagStart = strstr(template, "row");
-    char *columnTagStart = strstr(template, "column");
+    char *rowTagStart = strstr(template, ROW_TAG);
+    char *columnTagStart = strstr(template, COL_TAG);
 
     // Set the memory of <row> to -1 to identify it.
-    int x;
-    for (x = 0; x < strlen("row"); x++)
+    for (x = 0; x < strlen(ROW_TAG); x++)
     {
         rowTagStart[x] = -1;
     }
 
     // Set the memory of <column> in the template to -2 to identify it.
-    for (x = 0; x < strlen("column"); x++)
+    for (x = 0; x < strlen(COL_TAG); x++)
     {
-        rowTagStart[x] = -2;
+        columnTagStart[x] = -2;
     }
 
-    int pathLength = strlen(template) + strlen(row) + strlen(column) - (strlen("row") - strlen("column"));
+    int pathLength = strlen(template) + strlen(row) + strlen(column) - (strlen(ROW_TAG) - strlen(COL_TAG));
     char *path = (char *) malloc(sizeof(char) * pathLength);
 
-    int rowWritten;
-    int columnWritten;
+    int rowWritten = 0;
+    int columnWritten = 0;
     for (x = 0; x < strlen(template); x++)
     {
-        if (template[x] != -1 || template[x] != -2)
+        char currentChar[2] = {template[x], '\0'};
+        if (template[x] != '\377' && template[x] != '\376')
         {
-            strcat(path, &template[x]);
+            strcat(path, currentChar);
         }
-        else if (template[x] == -1 && rowWritten == 0)
+        else if (template[x] == '\377' && rowWritten == 0)
         {
             strcat(path, row);
             rowWritten = 1;
         }
-        else if (template[x] == -2 && columnWritten == 0)
+        else if (template[x] == '\376' && columnWritten == 0)
         {
             strcat(path, column);
             columnWritten = 1;
         }
     }
 
+    free(template);
     return path;
 }
 
@@ -96,8 +110,8 @@ int main(int argc, char **argv)
     /*
      * Check that the output file path template contains the <row> and <column> tags.
     */
-   char *rowTagAddress = strstr(argv[3], "row");
-   char *columnTagAddress = strstr(argv[3], "column");
+   char *rowTagAddress = strstr(argv[3], ROW_TAG);
+   char *columnTagAddress = strstr(argv[3], COL_TAG);
    error = checkTagsPresent(rowTagAddress, columnTagAddress);
    if (error != NULL)
         return displayError(error);
