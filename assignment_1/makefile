@@ -55,5 +55,5 @@ pgmgroup.o: pgmgroup.c pgmdata.h
 	gcc pgmgroup.c -c -g
 
 clean:
-	rm *.o pgmEcho pgmComp pgma2b pgmb2a pgmReduce pgmTile pgmAssemble
+	rm *.o pgmEcho pgmComp pgma2b pgmb2a pgmReduce pgmTile
 		

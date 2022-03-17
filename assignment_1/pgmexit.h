@@ -43,5 +43,5 @@
 #define STR_COMMENT_LIMIT "Comment limit was reached"
 #define STR_BAD_FACTOR "Factor was not an integer greater than 0"
 #define STR_NO_TAGS "<row> and <column> tags were not found in output file name template"
-#define STR_NO_ROW_TAG "<row> was not found in output file name template"
-#define STR_NO_COL_TAG "<column> was not found in output file name template"
+#define STR_NO_ROW_TAG "<row> tag was not found in output file name template"
+#define STR_NO_COL_TAG "<column> tag was not found in output file name template"

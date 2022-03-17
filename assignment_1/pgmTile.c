@@ -17,6 +17,7 @@ void freeTiles(pgmImage **tiles, int factor)
     }
 }
 
+
 char* buildPath(char *format, int rowNumber, int columnNumber)
 {
     // Counter variable.
@@ -26,9 +27,11 @@ char* buildPath(char *format, int rowNumber, int columnNumber)
     char *template = (char *) malloc(sizeof(char) * strlen(format) + 1);
     strcpy(template, format);
 
+    // Convert the row number to a decimal representation
     char row[10];
     sprintf(row, "%d", rowNumber);
 
+    // Convert the column number to a decimal representation.
     char column[10];
     sprintf(column, "%d", columnNumber);
 
