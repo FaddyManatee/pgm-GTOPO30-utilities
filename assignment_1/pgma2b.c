@@ -34,6 +34,14 @@ int main(int argc, char **argv)
         return displayError(error);
     }
 
+    // Check whether the image is already in the format we want to convert to.
+    error = checkFileFormat(inputImage, ASCII, argv[1]);
+    if (error != NULL)
+    {
+        freeImage(inputImage);
+        return displayError(error);
+    }
+
     // Convert the raster data of the image to binary from ASCII and write to the new file.
     convert(inputImage, argv[2], RAW);
 

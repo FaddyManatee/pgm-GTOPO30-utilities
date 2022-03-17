@@ -415,6 +415,23 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
 }
 
 
+pgmErr* checkFileFormat(pgmImage *image, int convertFrom, char *path)
+{
+    pgmErr *badFileToConvert = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (determineFormat(image) != convertFrom)
+    {
+        // We will free this error when we display it.
+        createError(badFileToConvert, EXIT_BAD_MAGIC_NUMBER, STR_BAD_MAGIC_NUMBER, path);
+        return badFileToConvert;
+    }
+
+    // Error not triggered. Free it.
+    free(badFileToConvert);
+    return NULL;
+}
+
+
 /*
  * Frees memory allocated to an error pointer. This is called when displayError()
  * is called.

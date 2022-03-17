@@ -6,6 +6,7 @@ pgmError* checkInvalidFileName(FILE *file, char *path);
 pgmError* checkInvalidWriteMode(int mode);
 pgmError* checkInvalidFactor(int scanned, char lastChar);
 pgmError* checkTagsPresent(char *template, char *rowTag, char *colTag);
+pgmError* checkFileFormat(pgmImage *image, int convertFrom, char *path);
 pgmError* checkImageCanBeWritten(pgmImage *image, char *path);
 pgmError* checkEOF(FILE *file, char *path);
 pgmError* checkBinaryEOF(int scanned, char *path);
