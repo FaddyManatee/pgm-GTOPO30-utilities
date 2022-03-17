@@ -70,21 +70,24 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
 /*
  *
  */
-pgmErr* checkTagsPresent(char *rowTag, char *columnTag)
+pgmErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
 {
     pgmErr *tagMissing = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (rowTag == NULL && columnTag == NULL)
+    char *rowTagAddress = strstr(template, rowTag);
+    char *columnTagAddress = strstr(template, colTag);
+
+    if (rowTagAddress == NULL && columnTagAddress == NULL)
     {
         createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_TAGS);
         return tagMissing;
     }
-    else if (rowTag == NULL)
+    else if (rowTagAddress == NULL)
     {
         createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_ROW_TAG);
         return tagMissing;
     }
-    else if (columnTag == NULL)
+    else if (columnTagAddress == NULL)
     {
         createError(tagMissing, EXIT_MISC, STR_MISC, STR_NO_COL_TAG);
         return tagMissing;

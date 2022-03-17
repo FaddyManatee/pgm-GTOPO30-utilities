@@ -119,9 +119,7 @@ int main(int argc, char **argv)
     /*
      * Check that the output file path template contains the <row> and <column> tags.
     */
-   char *rowTagAddress = strstr(argv[3], ROW_TAG);
-   char *columnTagAddress = strstr(argv[3], COL_TAG);
-   error = checkTagsPresent(rowTagAddress, columnTagAddress);
+   error = checkTagsPresent(argv[3], ROW_TAG, COL_TAG);
    if (error != NULL)
         return displayError(error);
 
