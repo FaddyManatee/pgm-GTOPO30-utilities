@@ -13,9 +13,14 @@ int main(int argc, char **argv)
      * argv[1] = Input file path
      * argv[2] = Output file path
      */
-    if (argc != 3)
+    if (argc == 1)
     {
         printf("Usage: %s inputImage.pgm outputImage.pgm\n", argv[0]);
+        return EXIT_NO_ERRORS;
+    }
+    else if (argc != 3)
+    {
+        printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
 

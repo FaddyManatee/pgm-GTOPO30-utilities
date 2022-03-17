@@ -95,9 +95,14 @@ int main(int argc, char **argv)
      * argv[2] = Integer factor
      * argv[3] = Output file path template needed <row> and <column> tags
      */
-    if (argc != 4)
+    if (argc == 1)
     {
         printf("Usage: %s inputImage.pgm tiling_factor outputImage_<row>_<column>.pgm\n", argv[0]);
+        return EXIT_NO_ERRORS;
+    }
+    if (argc != 4)
+    {
+        printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
 

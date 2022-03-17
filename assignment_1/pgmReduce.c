@@ -15,9 +15,14 @@ int main(int argc, char **argv)
      * argv[2] = Integer factor
      * argv[3] = Output file path
      */
-    if (argc != 4)
+    if (argc == 1)
     {
         printf("Usage: %s inputImage.pgm reduction_factor outputImage.pgm\n", argv[0]);
+        return EXIT_NO_ERRORS;
+    }
+    else if (argc != 4)
+    {
+        printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
 

@@ -62,6 +62,7 @@ static pgmImage** createTiles(pgmImage *image, int factor)
             }
         }
     }
+    
     return tiles;
 }
 
@@ -80,22 +81,31 @@ pgmImage** tile(pgmImage *image, int factor)
     int subColumn;
     int tileNumber = 0;
     int tilePixel = 0;
+    int readFromRow = 0;
+    int readFromColumn = 0;
 
-    for (row = 0; row < factor - 1; row++)
+    for (row = 0; row < factor; row++)
     {
-        for (column = 0; column < factor - 1; column++)
+        for (column = 0; column < factor; column++)
         {
-            for (subRow = 0; subRow < getHeight(imageTiles[tileNumber]) - 1; subRow++)
+            for (subRow = 0; subRow < getHeight(imageTiles[tileNumber]); subRow++)
             {
-                for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]) - 1; subColumn++)
+                for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]); subColumn++)
                 {
-                    setPixel(imageTiles[tileNumber], getPixel(image, subRow * (row + 1), subColumn * (column + 1)), tilePixel);
-                    tilePixel++;
+                    setPixel(imageTiles[tileNumber], getPixel(image, (row + 1) * subRow, (column + 1) * subColumn), tilePixel);
                 }
             }
+
+            readFromColumn = readFromColumn + (getHeight(image) / factor);
             tileNumber++;
             tilePixel = 0;
+
+            if (tileNumber == factor * factor)
+            {
+                return imageTiles;
+            }
         }
+        readFromRow = readFromRow + (getWidth(image) / factor);
+        readFromColumn = 0;
     }
-    return imageTiles;
 }

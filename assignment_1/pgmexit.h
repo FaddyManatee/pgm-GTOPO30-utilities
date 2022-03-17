@@ -8,6 +8,7 @@
 #define STR_ASSEMBLED "ASSEMBLED\n"
 
 #define EXIT_BAD_ARGS_COUNT 1
+#define STR_BAD_ARGS_COUNT "ERROR: Bad Argument Count\n"
 
 #define EXIT_BAD_FILE_NAME 2
 #define STR_BAD_FILE_NAME "ERROR: Bad File Name:"

@@ -13,7 +13,7 @@ pgmb2a: pgmb2a.o pgmio.o pgmerror.o pgmdata.o
 	gcc pgmb2a.o pgmio.o pgmerror.o pgmdata.o -o pgmb2a -g
 
 pgmReduce: pgmReduce.o pgmshrink.o pgmio.o pgmerror.o pgmdata.o
-	gcc pgmReduce.o pgmshrink.o pgmio.o pgmerror.o pgmdata.o -o pgmReduce -g
+	gcc pgmReduce.o pgmshrink.o pgmio.o pgmerror.o pgmdata.o -o pgmReduce -g -lm
 
 pgmTile: pgmTile.o pgmgroup.o pgmio.o pgmerror.o pgmdata.o
 	gcc pgmTile.o pgmgroup.o pgmio.o pgmerror.o pgmdata.o -o pgmTile -g

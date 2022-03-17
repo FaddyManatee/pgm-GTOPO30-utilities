@@ -1,10 +1,20 @@
+#include <math.h>
 #include "pgmdata.h"
 
 static pgmImage* initialiseReduced(pgmImage *image, int factor)
 {
     pgmImage *reduced = createImage();
     setMagicNumber(reduced, getMagicNumber(image), determineFormat(image));
-    setDimensions(reduced, (getWidth(image) / factor), (getHeight(image) / factor));
+
+    /* 
+     * Calculate the dimensions of the reduced image, taking into account remainder
+     * pixels after reduction by the factor, using the ceil function to do so.
+     */
+    int reducedWidth = ceil(getWidth(image) / (double)factor);
+    int reducedHeight = ceil(getHeight(image) / (double)factor);
+
+    // Set these dimensions.
+    setDimensions(reduced, reducedWidth, reducedHeight);
     setMaxGrayValue(reduced, getMaxGrayValue(image));
 
     // We now have enough information to initialise the raster.
@@ -28,7 +38,7 @@ pgmImage* reduce(pgmImage *inputImage, int factor)
         {
             pixel = getPixel(inputImage, row, column);
             
-            if (row % factor == 0 && column % factor == 0 && count <= getWidth(reducedImage) * getHeight(reducedImage))
+            if (row % factor == 0 && column % factor == 0)
             {
                 setPixel(reducedImage, pixel, count);
                 count++;

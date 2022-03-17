@@ -473,19 +473,14 @@ static void writeCommentLines(pgmImage *image, FILE *file, int *line)
     int count = 0;
     do
     {
-        // Avoid incrementing line number on first iteration.
-        if (count > 0)
-            (*line)++;
-
         // Get the comment string that was read at the specified line. 
         char *comment = getComment(image, *line);
 
         // Write the comment to the file if not NULL. Comments are already terminated with \n.
         if (comment != NULL)
             fputs(comment, file);
-            (*line)++;
 
-        count++;
+        (*line)++;
         // Loop while there exists a comment on the next line.
     } while (getCommentExists(image, *line) == 1);
 }
@@ -525,10 +520,11 @@ static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
     (*line)++;
 
     /*
-     * Do not write comment lines that appear fight before the raster. This causes
+     * Do not write comment lines that appear right before the raster. This causes
      * issues with programs that read pgm files. The specification also states that
      * comments directly before the raster are not permitted.
      */
+    // writeCommentLines(image, file, line);
 }
 
 
