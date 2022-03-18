@@ -39,7 +39,7 @@ Purpose: Contains functions to convert read in ASCII encoded pgm file data to bi
 versa. Such code would need to appear in these programs, so it makes sense to modularise these
 functions.
 
-Module Name: pgmcrop
+Module Name: pgmcrop (renamed to pgmshrink due to misconception)
 Programs: pgmReduce
 Purpose: Contains functions used to reduce a read-in pgm file by the specified factor. Such functions 
 will include retrieving reduced row and column length using this factor, and another to construct a 
