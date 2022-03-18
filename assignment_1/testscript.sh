@@ -1,3 +1,5 @@
+#!/bin/bash
+
 green="\e[0;92m"
 red="\e[0;91m"
 reset="\e[0m"
@@ -682,7 +684,7 @@ fi
 numberOfTests=$((numberOfTests+1))
 
 
-
+echo -n Test 45:
 
 
 

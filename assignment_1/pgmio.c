@@ -42,8 +42,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *path)
 
         // Get the next character from file to examine.
         nextChar = fgetc(file);
-        error = checkEOF(file, path);
-        if (error != NULL)
+        if (nextChar == EOF)
             return;
 
         // Check that the character is a comment prefix.
@@ -222,7 +221,7 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *path)
 /*
  * Reads the image raster, interpreting it as ASCII data. Can return an error.
  */
-static void readAsciiData(pgmImage *image, FILE *file, char *path)
+static void readAsciiData(pgmImage *image, FILE *file, char *path, int *line)
 {
     int x;
     int scanCount = 0;
@@ -232,26 +231,40 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path)
     // Start reading the ASCII raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
     {
+        readComments(image, line, file, path);
+        if (error != NULL)
+            return;
+
         error = checkEOF(file, path);
         if (error != NULL)
             return;
 
-        // Skip preceding whitespace and read in next pixel in raster.
-        scanCount = fscanf(file, " %u", &pixel);
+        if (getComment(image, *line) == NULL)
+        {
+            // Skip preceding whitespace and read in next pixel in raster.
+            scanCount = fscanf(file, " %u", &pixel);
 
-        // Check that the pixel we read is within valid range.
-        error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
-        if (error != NULL)
-            return;
+            // Check that the pixel we read is within valid range.
+            error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
+            if (error != NULL)
+                return;
 
-        // Set the value if check passes.
-        // Integer value of pixel should be small enough to fit the short type.
-        setPixel(image, pixel, x);
-        pixelsRead++;
+            // Set the value if check passes.
+            // Integer value of pixel should be small enough to fit the short type.
+            setPixel(image, pixel, x);
+
+            if ((pixelsRead + 1) % getWidth(image) == 0)
+                (*line)++;
+
+            pixelsRead++;
+        }
     }
 
     // Check that the number of pixels read matched the dimensions.
     error = checkPixelCount(pixelsRead, getWidth(image) * getHeight(image), path);
+    
+    // Read comments after the raster data.
+    readComments(image, line, file, path);
 }
 
 
@@ -321,7 +334,7 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
 /*
  * Reads the image raster. Can return an error.
  */
-static void readRaster(pgmImage *image, FILE *file, char *filePath)
+static void readRaster(pgmImage *image, FILE *file, char *filePath, int *line)
 {
     // Check if image is allocated.
     error = checkImageAllocated(image);
@@ -350,7 +363,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath)
     // Choose appropriate read statements based on the type of data of the image raster.
     if (raw == 0)
     {
-        readAsciiData(image, file, filePath);
+        readAsciiData(image, file, filePath, line);
     }
     else if (raw == 1)
     {
@@ -446,8 +459,8 @@ pgmImage* readImage(char *filePath)
         goto cleanup;
     }
 
-    // Read raster data, and check if an error occurred. We no longer need line number.
-    readRaster(newImage, inputFile, filePath);
+    // Read raster data, and check if an error occurred.
+    readRaster(newImage, inputFile, filePath, lineNumber);
     if (error != NULL)
     {
         newImage = NULL;
@@ -518,20 +531,13 @@ static void writeHeader(pgmImage *image, FILE *file, int format, int *line)
     // Write the maximum gray value.
     fprintf(file, "%u\n", getMaxGrayValue(image));
     (*line)++;
-
-    /*
-     * Do not write comment lines that appear right before the raster. This causes
-     * issues with programs that read pgm files. The specification also states that
-     * comments directly before the raster are not permitted.
-     */
-    // writeCommentLines(image, file, line);
 }
 
 
 /*
  * Writes the image raster to a file in ascii format.
  */
-static void writeAsciiData(pgmImage *image, FILE *file)
+static void writeAsciiData(pgmImage *image, FILE *file, int *line)
 {
     int width = getWidth(image);
     int height = getHeight(image);
@@ -540,6 +546,7 @@ static void writeAsciiData(pgmImage *image, FILE *file)
     int column;
     for (row = 0; row < height; row++)
     {
+        writeCommentLines(image, file, line);
         for (column = 0; column < width; column++)
         {
             // For the first pixel or first pixel in a row, write without preceding whitespace.
@@ -557,6 +564,9 @@ static void writeAsciiData(pgmImage *image, FILE *file)
         // Append a newline character before moving onto the next row in raster.
         fputs("\n", file);
     }
+
+    // Write comments that appear after the raster data.
+    writeCommentLines(image, file, line);
 }
 
 
@@ -660,7 +670,7 @@ void echoImage(pgmImage *image, char *filePath)
     // Write the raster in the format specified by binaryOrAscii.
     if (formatting == ASCII)
     {
-        writeAsciiData(image, outputFile);
+        writeAsciiData(image, outputFile, lineNumber);
     }
     else if (formatting == RAW)
     {
@@ -708,7 +718,7 @@ void convert(pgmImage *image, char *filePath, int binaryOrAscii)
     // Write the raster in the format specified by binaryOrAscii.
     if (binaryOrAscii == ASCII)
     {
-        writeAsciiData(image, outputFile);
+        writeAsciiData(image, outputFile, lineNumber);
     }
     else if (binaryOrAscii == RAW)
     {
