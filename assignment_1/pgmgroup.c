@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "pgmdata.h"
 
+typedef struct point
+{
+    int widthCoord;
+    int heightCoord;
+} point;
+
+
 static pgmImage** createTiles(pgmImage *image, int factor)
 {
     /*
@@ -67,6 +74,35 @@ static pgmImage** createTiles(pgmImage *image, int factor)
 }
 
 
+static point* calculateReadPoints(pgmImage *image, pgmImage **tiles, int factor)
+{
+    point *points = (point *) malloc(sizeof(point) * factor * factor);
+
+    int row;
+    int column;
+    int tileNumber = 0;
+    int currentWidth = 0;
+    int currentHeight = 0;
+
+    for (row = 0; row < factor; row++)
+    {
+        for (column = 0; column < factor; column++)
+        {   
+            points[tileNumber].widthCoord = currentWidth;
+            points[tileNumber].heightCoord = currentHeight;
+
+            currentWidth = currentWidth + getWidth(tiles[tileNumber]);
+            tileNumber++;
+
+            if (tileNumber == factor * factor)
+                return points;
+        }
+        currentWidth = 0;
+        currentHeight = currentHeight + getHeight(tiles[tileNumber]);
+    }
+}
+
+
 pgmImage** tile(pgmImage *image, int factor)
 {
     /* 
@@ -75,14 +111,14 @@ pgmImage** tile(pgmImage *image, int factor)
      */
     pgmImage **imageTiles = createTiles(image, factor);
 
+    point *readPoints = calculateReadPoints(image, imageTiles, factor);
+
     int row;
     int column;
     int subRow;
     int subColumn;
     int tileNumber = 0;
     int tilePixel = 0;
-    int readFromRow = 0;
-    int readFromColumn = 0;
 
     for (row = 0; row < factor; row++)
     {
@@ -92,20 +128,18 @@ pgmImage** tile(pgmImage *image, int factor)
             {
                 for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]); subColumn++)
                 {
-                    setPixel(imageTiles[tileNumber], getPixel(image, (row + 1) * subRow, (column + 1) * subColumn), tilePixel);
+                    setPixel(imageTiles[tileNumber], getPixel(image, readPoints[tileNumber].heightCoord + subRow, readPoints[tileNumber].widthCoord + subColumn), tilePixel);
+                    tilePixel++;
                 }
             }
-
-            readFromColumn = readFromColumn + (getHeight(image) / factor);
-            tileNumber++;
             tilePixel = 0;
+            tileNumber++;
 
             if (tileNumber == factor * factor)
             {
+                free(readPoints);
                 return imageTiles;
             }
         }
-        readFromRow = readFromRow + (getWidth(image) / factor);
-        readFromColumn = 0;
     }
 }

@@ -306,7 +306,8 @@ void freeImage(image* image)
         if (image->raster != NULL)
         {
             free(image->raster);
-            free(image);
         }
+
+        free(image);
     }
 }

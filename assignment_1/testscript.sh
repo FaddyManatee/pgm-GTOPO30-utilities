@@ -697,3 +697,4 @@ echo "Tests Failed: $failed/$numberOfTests"
 # Hide the output of makefile clean target
 make clean > /dev/null
 rm output.pgm
+rm verylongfilenamethathopefullydoesnotcrashtheprogramwhenanerroroccursandthefilenamehastobedisplayedtotheuser.pgm

@@ -1,4 +1,4 @@
-all: pgmEcho pgma2b pgmb2a pgmComp pgmReduce pgmTile #pgmAssemble
+all: pgmEcho pgma2b pgmb2a pgmComp pgmReduce pgmTile
 
 pgmEcho: pgmEcho.o pgmio.o pgmerror.o pgmdata.o
 	gcc pgmEcho.o pgmio.o pgmerror.o pgmdata.o -o pgmEcho -g

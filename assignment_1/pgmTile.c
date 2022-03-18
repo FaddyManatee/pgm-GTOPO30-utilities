@@ -146,6 +146,7 @@ int main(int argc, char **argv)
     {
         for (column = 0; column < factor; column++)
         {
+            // Write each image of the tile to disk.
             char *path = buildPath(argv[3], row, column);
             echoImage(tiledImage[tileNumber], path);
             if (error != NULL)
