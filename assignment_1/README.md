@@ -2,7 +2,7 @@
 
 ## Running the makefile
 
-*make <target>*
+*make "target"*
 
 **Individual program targets:** *pgmEcho, pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile*
 **All programs target:** *all*
@@ -20,7 +20,7 @@
 
 **pgmReduce:** *./pgmReduce inputImage.pgm reduction_factor outputImage.pgm*
 
-**pgmTile:** *./pgmTile inputImage.pgm tiling_factor outputImage_<row>_<column>.pgm* where <row> and <column> tags may appear anywhere in the output file name template.
+**pgmTile:** *./pgmTile inputImage.pgm tiling_factor outputImage_<row>_<column>.pgm* where row and column tags may appear anywhere in the output file name template.
 
 
 ## Running the test script
