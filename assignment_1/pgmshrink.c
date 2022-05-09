@@ -28,7 +28,7 @@ pgmImage* reduce(pgmImage *inputImage, int factor)
     // Initialise reduced image using the input image and factor.
     pgmImage *reducedImage = initialiseReduced(inputImage, factor);
 
-    unsigned short pixel = 0;
+    unsigned char pixel = 0;
     int count = 0;
     int row;
     int column;

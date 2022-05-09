@@ -7,7 +7,9 @@
 
 
 /*
- *
+ * The data related to an error. Its integer error code and its associated string
+ * displayed to the user to describe what went wrong. Data of this type is
+ * initialised whenever an error is detected.
  */
 typedef struct pgmErr
 {
@@ -22,17 +24,19 @@ typedef struct pgmErr
 static void createError(pgmErr *err, int code, char *prefix , char *string)
 {
     // Allocate enough memory to the error string and build it.
-    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string), sizeof(char));
+    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 2, sizeof(char));
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");
+    strcat(err->errorMsg, "(");
     strcat(err->errorMsg, string);
+    strcat(err->errorMsg, ")");
     strcat(err->errorMsg, "\n");
 }
 
 
 /*
- *
+ * Checks whenever a file stream failed to open.
  */
 pgmErr* checkInvalidFileName(FILE *file, char *path)
 {
@@ -68,7 +72,8 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
 
 
 /*
- *
+ * Checks whether <row> and <column> tags are present in the template output file
+ * names for pgmTile.
  */
 pgmErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
 {
@@ -99,7 +104,7 @@ pgmErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
 
 
 /*
- *
+ * 
  */
 pgmErr* checkEOF(FILE *file, char *path)
 {
@@ -143,7 +148,9 @@ pgmErr* checkComment(char *comment, char *path)
 {
     pgmErr *badCommentLine = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (comment == NULL)
+    int length = strlen(comment);
+    
+    if (comment == NULL || length > MAX_COMMENT_LINE_LENGTH)
     {
         // We will free the error when we display it.
         createError(badCommentLine, EXIT_BAD_COMMENT_LINE, STR_BAD_COMMENT_LINE, path);

@@ -44,19 +44,16 @@ typedef struct comment
  * 
  * Maximum Gray value: Appears below the width and height. It is greater than 0,
  * and less than 65536. If this value is less than or equal to 255, we need one
- * byte to store each pixel in the raster. If this value is greater than 255 and
- * less than or equal to 65535, we need 2 bytes to store each pixel in the raster.
+ * byte to store each pixel in the raster. Values higher than this are not
+ * permitted.
  * 
  * Raster: Each pixel in the raster represents a gray value greater than 0 and less than 
- * the specified maximum gray value, which itself must be less than 65536.
- * Every pixel uses the same number of bytes, either one or two, but no more than
- * two bytes.
+ * the specified maximum gray value, which itself must be less than 255.
+ * Every pixel uses the one byte.
  * 
  * Comments: Comments may appear in plainext pgm files (P2). They are implemented
  * using the defined "comment" data type. An arbitrary amount of comments are to
  * be stored.
- * 
- * For simplicity, each pixel in the raster will occupy two bytes.
  */
 typedef struct image
 {
@@ -64,9 +61,8 @@ typedef struct image
     int width; 
     int height;
     int maxGrayValue;
-    int bytes;
     unsigned short magicNumber;
-    unsigned short *raster;
+    unsigned char *raster;
     comment *comments;
 } image;
 
@@ -84,7 +80,6 @@ image* createImage()
     newImage->width = DEFAULT_VALUE;
     newImage->height = DEFAULT_VALUE;
     newImage->maxGrayValue = DEFAULT_VALUE;
-    newImage->bytes = DEFAULT_VALUE;
     newImage->magicNumber = 0;
     newImage->raster = NULL;
     
@@ -109,7 +104,7 @@ image* createImage()
 void initImageRaster(image *image)
 {       
     // Allocate number of pixels we need to store.
-    image->raster = (unsigned short *) malloc(sizeof(unsigned short) * image->height * image->width);
+    image->raster = (unsigned char *) malloc(sizeof(unsigned char) * image->height * image->width);
 
     // Set each value for each pixel in the raster to an initial value of 0.
     int x;
@@ -187,15 +182,9 @@ int getMaxGrayValue(image *image)
 }
 
 
-unsigned short* getRaster(image *image)
+unsigned char* getRaster(image *image)
 {
     return image->raster;
-}
-
-
-int getBytes(image *image)
-{
-    return image->bytes;
 }
 
 
@@ -203,7 +192,7 @@ int getBytes(image *image)
  * Returns the value of the pixel in the raster given a pointer to the image and
  * the row and column this pixel should come from.
  */
-unsigned short getPixel(image *image, int row, int column)
+unsigned char getPixel(image *image, int row, int column)
 {
     // Map 1D array to 2D array so we can index it by rows and columns to get the pixel.
     return image->raster[(row * image->width) + column];
@@ -258,28 +247,18 @@ void setDimensions(image *image, int width, int height)
 
 
 /*
- * Sets the magic number for an image given its pointer. We can now also
- * determine how many bytes each pixel in the raster occupies.
+ * Sets the magic number for an image given its pointer.
  */
 void setMaxGrayValue(image *image, int maxGray)
 {
     image->maxGrayValue = maxGray;
-
-    if (maxGray >= MIN_GRAY_VALUE && maxGray <= 255)
-    {
-        image->bytes = 1;
-    }
-    else if (maxGray >= 256 && maxGray <= MAX_GRAY_VALUE)
-    {
-        image->bytes = 2;
-    }
 }
 
 
 /*
  *
  */
-void setPixel(image *image, unsigned short value, int pixelNo)
+void setPixel(image *image, unsigned char value, int pixelNo)
 {
     image->raster[pixelNo] = value;
 }

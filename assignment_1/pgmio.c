@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 #include "pgmdata.h"
 #include "pgmlimits.h"
 #include "pgmerror.h"
@@ -48,9 +49,6 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *path)
         // Check that the character is a comment prefix.
         if (nextChar == '#')
         {
-            // Put the examined character back.
-            ungetc(nextChar, file);
-
             // Get the address of an empty comment string/buffer.
             char *commentBuffer = setComment(image, *line);
 
@@ -59,7 +57,7 @@ static void readComments(pgmImage *image, int *line, FILE *file, char *path)
             if (error != NULL)
                 return;
                 
-            // Read the comment starting from '#' to the end of the line.
+            // Read the comment to the end of the line.
             char *commentString = fgets(commentBuffer, MAX_COMMENT_LINE_LENGTH, file);
 
             // Check that the comment read was successful.
@@ -260,11 +258,16 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path, int *line)
         }
     }
 
+    // Check that the file does not contain too much raster data.
+    char character;
+    while ((character = fgetc(file)) != EOF)
+    {
+        if (!isspace(character))
+            pixelsRead++;
+    }
+
     // Check that the number of pixels read matched the dimensions.
     error = checkPixelCount(pixelsRead, getWidth(image) * getHeight(image), path);
-    
-    // Read comments after the raster data.
-    readComments(image, line, file, path);
 }
 
 
@@ -276,10 +279,7 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
     int x;
     int scanCount = 0;
     int pixelsRead = 0;
-    unsigned short pixel = 0;
-
-    // Determine how many bytes a pixel uses. 
-    int bytesNeeded = getBytes(image);
+    unsigned char pixel = 0;
 
     // Skip preceeding whitespace.
     fscanf(file, " ");
@@ -287,34 +287,12 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
     // Start reading the binary raster data.
     for (x = 0; x < getWidth(image) * getHeight(image); x++)
     {   
-        if (bytesNeeded == 1)
-        {
-            scanCount = fread(&pixel, 1, 1, file);
+        scanCount = fread(&pixel, 1, 1, file);
 
-            // Check that the requested number of bytes was read.
-            error = checkBinaryEOF(scanCount, path);
-            if (error != NULL)
-                return;
-        }
-        else if (bytesNeeded == 2)
-        {
-            unsigned char pixelMSBLast[2];
-            scanCount = fread(pixelMSBLast, 1, 1, file);
-
-            // Check that the requested number of bytes was read.
-            error = checkBinaryEOF(scanCount, path);
-            if (error != NULL)
-                return;
-            
-            scanCount = fread(pixelMSBLast, 1, 1, file);
-
-            // Check that the requested number of bytes was read.
-            error = checkBinaryEOF(scanCount, path);
-            if (error != NULL)
-                return;
-
-            pixel = *((unsigned short *) pixelMSBLast);
-        }
+        // Check that the requested number of bytes was read.
+        error = checkBinaryEOF(scanCount, path);
+        if (error != NULL)
+            return;
 
         // Check that the pixel we read is within valid range.
         error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
@@ -324,6 +302,14 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
         // Set the value if check passes.
         setPixel(image, pixel, x);
         pixelsRead++;
+    }
+
+    // Check whether the file contains more data than expected.
+    pixel = 0;
+    while (fread(&pixel, 1, 1, file) != 0)
+    {
+        if (pixel > 0)
+            pixelsRead++;
     }
 
     // Check that the number of pixels read matched the dimensions.
@@ -489,9 +475,15 @@ static void writeCommentLines(pgmImage *image, FILE *file, int *line)
         // Get the comment string that was read at the specified line. 
         char *comment = getComment(image, *line);
 
-        // Write the comment to the file if not NULL. Comments are already terminated with \n.
+        // Write the comment to the file if not empty. Comments are already terminated with \n.
         if (comment != NULL)
-            fputs(comment, file);
+        {
+            if (comment[0] != '\0')
+            {
+                fputs("#", file);
+                fputs(comment, file);
+            }
+        }
 
         (*line)++;
         // Loop while there exists a comment on the next line.
@@ -578,41 +570,15 @@ static void writeBinaryData(pgmImage *image, FILE *file)
     int width = getWidth(image);
     int height = getHeight(image);
 
-    int bytesNeeded = getBytes(image);
-    unsigned short pixel = 0;
-
+    unsigned char pixel = 0;
     int row;
     int column;
     for (row = 0; row < height; row++)
     {
         for (column = 0; column < width; column++)
         {
-            // Little Endian
-            if (bytesNeeded == 1)
-            {
-                // 0 <= pixel (unsigned short) <= 255. We can use the first byte.
-                pixel = getPixel(image, row, column);
-                fwrite(&pixel, 1, 1, file);
-            }
-            else if (bytesNeeded == 2)
-            {
-                /*
-                 * 256 <= pixel (unsigned short) <= 65535. We need two bytes, and
-                 * the most significant byte (MSB) should be first. We now read the most
-                 * significant byte.
-                 */
-                pixel = getPixel(image, row, column);
-
-                // Get the address in memory to the where the pixel of type unsigned short is stored.
-                unsigned short *pixelPointer = &pixel;
-                
-                // Get byte after the start of this address. This will be the MSB with little endian. 
-                fwrite(pixelPointer + sizeof(unsigned char), 1, 1, file);
-
-                // Now read the least significant byte.
-                pixel = getPixel(image, row, column);
-                fwrite(&pixel, 1, 1, file);
-            }
+            pixel = getPixel(image, row, column);
+            fwrite(&pixel, 1, 1, file);
         }
     }
 }
