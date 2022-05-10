@@ -4,7 +4,11 @@ typedef struct pgmErr pgmError;
 
 pgmError* checkInvalidFileName(FILE *file, char *path);
 pgmError* checkInvalidWriteMode(int mode);
-pgmError* checkInvalidFactor(int scanned, char lastChar);
+pgmError* checkInvalidFactor(int factor, char lastChar);
+pgmError* checkInvalidDimension(int dimension, char lastChar);
+pgmError* checkInvalidTupleFormat(char *tuple);
+pgmError* checkInvalidRow(int row, int totalRows, char lastChar);
+pgmError* checkInvalidColumn(int column, int totalColumns, char lastChar);
 pgmError* checkTagsPresent(char *template, char *rowTag, char *colTag);
 pgmError* checkFileFormat(pgmImage *image, int convertFrom, char *path);
 pgmError* checkImageCanBeWritten(pgmImage *image, char *path);

@@ -53,6 +53,7 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
     return NULL;
 }
 
+
 /*
  * Checks whether the argument for factor is greater than 0.
  */
@@ -67,6 +68,78 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
     }
 
     free(invalidFactor);
+    return NULL;
+}
+
+
+/*
+ * Checks whether the argument for a dimension is greater than 0 and less than 65536.
+ */
+pgmErr* checkInvalidDimension(int dimension, char lastChar)
+{
+    pgmErr *invalidDimension = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (dimension <= MIN_IMAGE_DIMENSION || dimension > MAX_IMAGE_DIMENSION || lastChar != '\0')
+    {
+        createError(invalidDimension, EXIT_MISC, STR_MISC, STR_BAD_DIMENSION);
+        return invalidDimension;
+    }
+
+    free(invalidDimension);
+    return NULL;
+}
+
+
+/*
+ * Checks whether a tuple for image assembly is non-empty and padded with parentheses.
+ */
+pgmErr* checkInvalidTupleFormat(char *tuple)
+{
+    pgmErr *invalidTuple = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (!(strlen(tuple) > 0 && tuple[0] == '(' && tuple[strlen(tuple) - 1] == ')'))
+    {
+        createError(invalidTuple, EXIT_MISC, STR_MISC, STR_BAD_TUPLE);
+        return invalidTuple;
+    }
+
+    free(invalidTuple);
+    return NULL;
+}
+
+
+/*
+ * Checks whether a tuple for image assembly contains a valid start row.
+ */
+pgmErr* checkInvalidRow(int row, int totalRows, char lastChar)
+{
+    pgmErr *invalidRow = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (row < MIN_IMAGE_DIMENSION || row > totalRows || lastChar != '\0')
+    {
+        createError(invalidRow, EXIT_MISC, STR_MISC, STR_BAD_ROW);
+        return invalidRow;
+    }
+
+    free(invalidRow);
+    return NULL;
+}
+
+
+/*
+ * Checks whether a tuple for image assembly contains a valid start column.
+ */
+pgmErr* checkInvalidColumn(int column, int totalColumns, char lastChar)
+{
+    pgmErr *invalidColumn = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (column < MIN_IMAGE_DIMENSION || column > totalColumns || lastChar != '\0')
+    {
+        createError(invalidColumn, EXIT_MISC, STR_MISC, STR_BAD_ROW);
+        return invalidColumn;
+    }
+
+    free(invalidColumn);
     return NULL;
 }
 
