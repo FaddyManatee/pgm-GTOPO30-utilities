@@ -1,10 +1,21 @@
+# Comment 0
+# Comment 1
 P2
+# Comment 2
+# Comment 3
+# Comment 4
 24 7
+# Comment 5
 15
+# (Ignored if converted to binary) Comment 6
+# (Ignored if converted to binary) Comment 7
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 0 3 3 3 3 0 0 7 7 7 7 0 0 11 11 11 11 0 0 15 15 15 15 0
 0 3 0 0 0 0 0 7 0 0 0 0 0 11 0 0 0 0 0 15 0 0 15 0
 0 3 3 3 0 0 0 7 7 7 0 0 0 11 11 11 0 0 0 15 15 15 15 0
+# (Ignored if converted to binary) Comment 8
 0 3 0 0 0 0 0 7 0 0 0 0 0 11 0 0 0 0 0 15 0 0 0 0
 0 3 0 0 0 0 0 7 7 7 7 0 0 11 11 11 11 0 0 15 0 0 0 0
+# (Ignored if converted to binary) Comment 9
+# (Ignored if converted to binary) Comment 10
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0

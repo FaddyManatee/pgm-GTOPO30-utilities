@@ -221,40 +221,44 @@ static void readMaxGrayValue(pgmImage *image, int *line, FILE *file, char *path)
  */
 static void readAsciiData(pgmImage *image, FILE *file, char *path, int *line)
 {
-    int x;
+    int row;
+    int column;
     int scanCount = 0;
     int pixelsRead = 0;
     int pixel = 0;
 
     // Start reading the ASCII raster data.
-    for (x = 0; x < getWidth(image) * getHeight(image); x++)
+    for (row = 0; row < getHeight(image); row++)
     {
-        readComments(image, line, file, path);
-        if (error != NULL)
-            return;
-
-        error = checkEOF(file, path);
-        if (error != NULL)
-            return;
-
-        if (getComment(image, *line) == NULL)
+        for (column = 0; column < getWidth(image); column++)
         {
-            // Skip preceding whitespace and read in next pixel in raster.
-            scanCount = fscanf(file, " %u", &pixel);
-
-            // Check that the pixel we read is within valid range.
-            error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
+            readComments(image, line, file, path);
             if (error != NULL)
                 return;
 
-            // Set the value if check passes.
-            // Integer value of pixel should be small enough to fit the short type.
-            setPixel(image, pixel, x);
+            error = checkEOF(file, path);
+            if (error != NULL)
+                return;
 
-            if ((pixelsRead + 1) % getWidth(image) == 0)
-                (*line)++;
+            if (getComment(image, *line) == NULL)
+            {
+                // Skip preceding whitespace and read in next pixel in raster.
+                scanCount = fscanf(file, " %u", &pixel);
 
-            pixelsRead++;
+                // Check that the pixel we read is within valid range.
+                error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
+                if (error != NULL)
+                    return;
+
+                // Set the value if check passes.
+                // Integer value of pixel should be small enough to fit the short type.
+                setPixel(image, pixel, row, column);
+
+                if ((pixelsRead + 1) % getWidth(image) == 0)
+                    (*line)++;
+
+                pixelsRead++;
+            }
         }
     }
 
@@ -276,7 +280,8 @@ static void readAsciiData(pgmImage *image, FILE *file, char *path, int *line)
  */
 static void readRawData(pgmImage *image, FILE *file, char *path)
 {
-    int x;
+    int row;
+    int column;
     int scanCount = 0;
     int pixelsRead = 0;
     unsigned char pixel = 0;
@@ -285,23 +290,26 @@ static void readRawData(pgmImage *image, FILE *file, char *path)
     fscanf(file, " ");
 
     // Start reading the binary raster data.
-    for (x = 0; x < getWidth(image) * getHeight(image); x++)
+    for (row = 0; row < getHeight(image); row++)
     {   
-        scanCount = fread(&pixel, 1, 1, file);
+        for (column = 0; column < getWidth(image); column++)
+        {
+            scanCount = fread(&pixel, 1, 1, file);
 
-        // Check that the requested number of bytes was read.
-        error = checkBinaryEOF(scanCount, path);
-        if (error != NULL)
-            return;
+            // Check that the requested number of bytes was read.
+            error = checkBinaryEOF(scanCount, path);
+            if (error != NULL)
+                return;
 
-        // Check that the pixel we read is within valid range.
-        error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
-        if (error != NULL)
-            return;
+            // Check that the pixel we read is within valid range.
+            error = checkPixel(pixel, getMaxGrayValue(image), scanCount, path);
+            if (error != NULL)
+                return;
 
-        // Set the value if check passes.
-        setPixel(image, pixel, x);
-        pixelsRead++;
+            // Set the value if check passes.
+            setPixel(image, pixel, row, column);
+            pixelsRead++;
+        }
     }
 
     // Check whether the file contains more data than expected.

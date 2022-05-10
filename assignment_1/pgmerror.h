@@ -7,6 +7,7 @@ pgmError* checkInvalidWriteMode(int mode);
 pgmError* checkInvalidFactor(int factor, char lastChar);
 pgmError* checkInvalidDimension(int dimension, char lastChar);
 pgmError* checkInvalidTupleFormat(char *tuple);
+pgmError* checkInvalidTupleElements(int count);
 pgmError* checkInvalidRow(int row, int totalRows, char lastChar);
 pgmError* checkInvalidColumn(int column, int totalColumns, char lastChar);
 pgmError* checkTagsPresent(char *template, char *rowTag, char *colTag);

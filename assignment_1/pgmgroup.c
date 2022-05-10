@@ -16,6 +16,7 @@ static pgmImage** createTiles(pgmImage *image, int factor)
      * of the tiles in this array will be for a factor of 3: row0col0, row0col1,
      * row0col2, row1col0, row1col1, row1col2, row2col0, row2col1, row2col2.
      */
+
     // Calculate the width of right-most tiles.
     int tileRightWidth = (getWidth(image) / factor) + (getWidth(image) % factor);
     
@@ -46,25 +47,21 @@ static pgmImage** createTiles(pgmImage *image, int factor)
             {
                 if (row < factor - 1 && column < factor - 1)
                 {
-                    setDimensions(tiles[tileNumber], tileWidth, tileHeight);
+                    tiles[tileNumber] = createEmptyImage(tileWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
                 }
                 else if (row < factor - 1 && column == factor - 1)
                 {
-                    setDimensions(tiles[tileNumber], tileRightWidth, tileHeight);
+                    tiles[tileNumber] = createEmptyImage(tileRightWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
                 }
                 else if (row == factor - 1 && column < factor - 1)
                 {
-                    setDimensions(tiles[tileNumber], tileWidth, tileBottomHeight);
+                    tiles[tileNumber] = createEmptyImage(tileWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));   
                 }
                 else if (row == factor - 1 && column == factor - 1)
                 {
-                    setDimensions(tiles[tileNumber], tileRightWidth, tileBottomHeight);
+                    tiles[tileNumber] = createEmptyImage(tileRightWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));
                 }
 
-                // Initialise the data of the tile.
-                setMagicNumber(tiles[tileNumber], getMagicNumber(image), determineFormat(image));
-                setMaxGrayValue(tiles[tileNumber], getMaxGrayValue(image));
-                initImageRaster(tiles[tileNumber]);
                 tileNumber++;
             }
         }
@@ -118,7 +115,6 @@ pgmImage** tile(pgmImage *image, int factor)
     int subRow;
     int subColumn;
     int tileNumber = 0;
-    int tilePixel = 0;
 
     for (row = 0; row < factor; row++)
     {
@@ -128,11 +124,9 @@ pgmImage** tile(pgmImage *image, int factor)
             {
                 for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]); subColumn++)
                 {
-                    setPixel(imageTiles[tileNumber], getPixel(image, readPoints[tileNumber].heightCoord + subRow, readPoints[tileNumber].widthCoord + subColumn), tilePixel);
-                    tilePixel++;
+                    setPixel(imageTiles[tileNumber], getPixel(image, readPoints[tileNumber].heightCoord + subRow, readPoints[tileNumber].widthCoord + subColumn), subRow, subColumn);
                 }
             }
-            tilePixel = 0;
             tileNumber++;
 
             if (tileNumber == factor * factor)
@@ -142,4 +136,39 @@ pgmImage** tile(pgmImage *image, int factor)
             }
         }
     }
+}
+
+
+/*
+ * Adds the child image to the parent image with the top-left corner of the image
+ * placed at the specified row and column values.
+ */
+void addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
+{
+    int parentRow;
+    int parentColumn;
+    int childRow = 0;
+    int childColumn = 0;
+
+    for (parentRow = startRow; parentRow < getHeight(parent); parentRow++)
+    {
+        if (startRow + childRow > getHeight(parent) - 1 || childRow == getHeight(child) - 1)
+        {
+            break;
+        }
+
+        for (parentColumn = startColumn; parentColumn < getWidth(parent); parentColumn++)
+        {
+            if (startColumn + childColumn > getWidth(parent) - 1 || childColumn == getWidth(child) - 1)
+            {
+                break;
+            }
+
+            setPixel(parent, getPixel(child, childRow, childColumn), parentRow, parentColumn);
+            childColumn++;
+        }
+
+        childRow++;
+        childColumn = 0;
+    } 
 }

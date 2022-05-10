@@ -5,7 +5,7 @@
  * Checks if the same pixel from each image both have the same gray value. Returns 1
  * if 1 if identical, 0 otherwise.
  */
-static int compareRasters(unsigned short *rasterOne, unsigned short *rasterTwo, int pixels)
+static int compareRasters(unsigned char *rasterOne, unsigned char *rasterTwo, int pixels)
 {
     int x;
     for (x = 0; x < pixels; x++)
@@ -60,8 +60,8 @@ int compare(pgmImage *imageOne, pgmImage *imageTwo)
         return 0;
 
     // Get the image raster data from both input images.
-    unsigned short* rasterImageOne = getRaster(imageOne);
-    unsigned short* rasterImageTwo = getRaster(imageTwo);
+    unsigned char* rasterImageOne = getRaster(imageOne);
+    unsigned char* rasterImageTwo = getRaster(imageTwo);
 
     // Compare the rasters pixel by pixel and return the result of the comparison.
     return compareRasters(rasterImageOne, rasterImageTwo, numberOfPixels);

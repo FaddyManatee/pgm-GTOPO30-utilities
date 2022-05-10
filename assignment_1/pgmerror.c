@@ -24,7 +24,7 @@ typedef struct pgmErr
 static void createError(pgmErr *err, int code, char *prefix , char *string)
 {
     // Allocate enough memory to the error string and build it.
-    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 2, sizeof(char));
+    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 4, sizeof(char));
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");
@@ -79,7 +79,7 @@ pgmErr* checkInvalidDimension(int dimension, char lastChar)
 {
     pgmErr *invalidDimension = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (dimension <= MIN_IMAGE_DIMENSION || dimension > MAX_IMAGE_DIMENSION || lastChar != '\0')
+    if (dimension < MIN_IMAGE_DIMENSION || dimension > MAX_IMAGE_DIMENSION || lastChar != '\0')
     {
         createError(invalidDimension, EXIT_MISC, STR_MISC, STR_BAD_DIMENSION);
         return invalidDimension;
@@ -109,13 +109,31 @@ pgmErr* checkInvalidTupleFormat(char *tuple)
 
 
 /*
+ * Checks whether a tuple for image assembly contains 3 space delimited values.
+ */
+pgmErr* checkInvalidTupleElements(int count)
+{
+    pgmErr *invalidElements = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (count != 3)
+    {
+        createError(invalidElements, EXIT_MISC, STR_MISC, STR_BAD_TUPLE);
+        return invalidElements;
+    }
+
+    free(invalidElements);
+    return NULL;
+}
+
+
+/*
  * Checks whether a tuple for image assembly contains a valid start row.
  */
 pgmErr* checkInvalidRow(int row, int totalRows, char lastChar)
 {
     pgmErr *invalidRow = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (row < MIN_IMAGE_DIMENSION || row > totalRows || lastChar != '\0')
+    if (row < MIN_IMAGE_DIMENSION - 1 || row > totalRows - 1 || lastChar != '\0')
     {
         createError(invalidRow, EXIT_MISC, STR_MISC, STR_BAD_ROW);
         return invalidRow;
@@ -133,9 +151,9 @@ pgmErr* checkInvalidColumn(int column, int totalColumns, char lastChar)
 {
     pgmErr *invalidColumn = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (column < MIN_IMAGE_DIMENSION || column > totalColumns || lastChar != '\0')
+    if (column < MIN_IMAGE_DIMENSION - 1 || column > totalColumns - 1 || lastChar != '\0')
     {
-        createError(invalidColumn, EXIT_MISC, STR_MISC, STR_BAD_ROW);
+        createError(invalidColumn, EXIT_MISC, STR_MISC, STR_BAD_COLUMN);
         return invalidColumn;
     }
 
@@ -513,20 +531,6 @@ pgmErr* checkFileFormat(pgmImage *image, int convertFrom, char *path)
 
 
 /*
- * Frees memory allocated to an error pointer. This is called when displayError()
- * is called.
- */
-static void freeError(pgmErr *err)
-{
-    if (err != NULL)
-    {
-        free(err->errorMsg);
-        free(err);
-    }
-}
-
-
-/*
  * Displays the occurrance of an error to the user, printing the error string
  * and returning the exit code that should be used to exit the program with.
  */
@@ -534,7 +538,8 @@ int displayError(pgmErr *err)
 {
     printf(err->errorMsg);
     int code = err->errorCode;
-    freeError(err);
+    free(err->errorMsg);
+    free(err);
     err = NULL;
     return code;
 }

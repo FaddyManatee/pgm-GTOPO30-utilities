@@ -149,6 +149,8 @@ int main(int argc, char **argv)
             // Write each image of the tile to disk.
             char *path = buildPath(argv[3], row, column);
             echoImage(tiledImage[tileNumber], path);
+
+            // Check if an error occurred when writing the image.
             if (error != NULL)
             {
                 free(inputImage);
@@ -157,7 +159,7 @@ int main(int argc, char **argv)
             }
             tileNumber++;
 
-            // Memory was allocated to path via buildPath, free it.
+            // Memory was allocated to path during buildPath(), free it.
             free(path);
         }
     }

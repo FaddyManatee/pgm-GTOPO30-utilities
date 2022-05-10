@@ -57,12 +57,12 @@ typedef struct comment
  */
 typedef struct image
 {
-    int raw;
+    int format;
     int width; 
     int height;
     int maxGrayValue;
     unsigned short magicNumber;
-    unsigned char *raster;
+    unsigned char **raster;
     comment *comments;
 } image;
 
@@ -76,7 +76,7 @@ image* createImage()
 {
     // Allocate memory to a new image and set initial NULL/empty values. 
     image *newImage = (image *) malloc(sizeof(image));
-    newImage->raw = DEFAULT_VALUE;
+    newImage->format = DEFAULT_VALUE;
     newImage->width = DEFAULT_VALUE;
     newImage->height = DEFAULT_VALUE;
     newImage->maxGrayValue = DEFAULT_VALUE;
@@ -88,7 +88,7 @@ image* createImage()
     int x;
     for (x = 0; x < MAX_COMMENTS; x++)
     {
-        newImage->comments[x].commentString = (char *) malloc(sizeof(char) * MAX_COMMENT_LINE_LENGTH);
+        newImage->comments[x].commentString = (char *) calloc(MAX_COMMENT_LINE_LENGTH, sizeof(char));
         newImage->comments[x].exists = 0;
         newImage->comments[x].lineNumber = 0;
     }
@@ -103,16 +103,67 @@ image* createImage()
  */
 void initImageRaster(image *image)
 {       
-    // Allocate number of pixels we need to store.
-    image->raster = (unsigned char *) malloc(sizeof(unsigned char) * image->height * image->width);
+    /* Allocate a 2D array to represent the raster. The 2D array contains arrays
+     * and their total is the height of the image. Each of these arrays have
+     * length equal to the width of the image.
+     */
 
-    // Set each value for each pixel in the raster to an initial value of 0.
-    int x;
-    for (x = 0; x < image->height * image->width; x++)
+    image->raster = (unsigned char **) malloc(sizeof(unsigned char *) * image->height);
+
+    // Allocate memory to each pixel in the raster and set them to an initial value of 0.
+    int row;
+    int column;
+
+    for (row = 0; row < image->height; row++)
     {
-        image->raster[x] = 0;
+        image->raster[row] = (unsigned char *) malloc(sizeof(unsigned char) * image->width);
+    }
+
+    for (row = 0; row < image->height; row++)
+    {
+        for (column = 0; column < image->width; column++)
+        {
+            image->raster[row][column] = 0;
+        }
     }
 }
+
+
+/*
+ *  Creates an empty image with the parameters given.
+ */
+image* createEmptyImage(int imageWidth, int imageHeight, int maxGray, int rawOrAscii)
+{
+    // Allocate memory to a new image and set the values.
+    image *newImage = (image *) malloc(sizeof(image));
+    newImage->format = rawOrAscii;
+    newImage->width = imageWidth;
+    newImage->height = imageHeight;
+    newImage->maxGrayValue = maxGray;
+    initImageRaster(newImage);
+
+    if (rawOrAscii == ASCII)
+    {
+        newImage->magicNumber = MAGIC_NUMBER_ASCII_PGM;
+    }
+    else if (rawOrAscii == RAW)
+    {
+        newImage->magicNumber = MAGIC_NUMBER_RAW_PGM;
+    }
+
+    // Allocate memory for storing comment lines and set initial NULL/empty values.
+    newImage->comments = (comment *) malloc(sizeof(comment) * MAX_COMMENTS);
+    int x;
+    for (x = 0; x < MAX_COMMENTS; x++)
+    {
+        newImage->comments[x].commentString = (char *) calloc(MAX_COMMENT_LINE_LENGTH, sizeof(char));
+        newImage->comments[x].exists = 0;
+        newImage->comments[x].lineNumber = 0;
+    }
+
+    return newImage;
+}
+
 
 /*
  * Returns the value that determines whether the raster is in ASCII or raw byte
@@ -120,7 +171,7 @@ void initImageRaster(image *image)
  */
 int determineFormat(image *image)
 {
-    return image->raw;
+    return image->format;
 }
 
 /*
@@ -182,7 +233,7 @@ int getMaxGrayValue(image *image)
 }
 
 
-unsigned char* getRaster(image *image)
+unsigned char** getRaster(image *image)
 {
     return image->raster;
 }
@@ -194,8 +245,7 @@ unsigned char* getRaster(image *image)
  */
 unsigned char getPixel(image *image, int row, int column)
 {
-    // Map 1D array to 2D array so we can index it by rows and columns to get the pixel.
-    return image->raster[(row * image->width) + column];
+    return image->raster[row][column];
 }
 
 /*
@@ -231,7 +281,7 @@ char* setComment(image *image, int lineNo)
  */
 void setMagicNumber(image *image, unsigned short magicNo, int rawOrAscii)
 {
-    image->raw = rawOrAscii;
+    image->format = rawOrAscii;
     image->magicNumber = magicNo;
 }
 
@@ -258,9 +308,9 @@ void setMaxGrayValue(image *image, int maxGray)
 /*
  *
  */
-void setPixel(image *image, unsigned char value, int pixelNo)
+void setPixel(image *image, unsigned char value, int row, int column)
 {
-    image->raster[pixelNo] = value;
+    image->raster[row][column] = value;
 }
 
 
@@ -275,6 +325,7 @@ void freeImage(image* image)
     {
         // Free memory allocated to comments.
         int x;
+
         for (x = 0; x < MAX_COMMENTS; x++)
         {
             free(image->comments[x].commentString);
@@ -284,6 +335,10 @@ void freeImage(image* image)
         // Free memory allocated to the image raster if it was allocated.
         if (image->raster != NULL)
         {
+            for (x = 0; x < image->height; x++)
+            {
+                free(image->raster[x]);
+            }
             free(image->raster);
         }
 
