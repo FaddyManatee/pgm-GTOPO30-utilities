@@ -113,17 +113,24 @@ int main(int argc, char **argv)
      * argv[4] = Tuple (row column inputImage.pgm)
      * argv[5] = ...
      * argv[6] = ...
+     * 
+     * Make sure that the argument in argv[1] is a path because the user can input 
+     * the width, height and three image tuples, forgetting the output file name 
+     * and get past the argument count check.
      */
+
     if (argc == 1)
     {
         printf("Usage: ./pgmAssemble outputImage.pgm width height (row column inputImage.pgm)+\n", argv[0]);
         return EXIT_NO_ERRORS;
     }
+    
     if (argc < 4)
     {
         printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
+
 
     /* 
      * Convert the width CLI argument to an integer. Check that the width is valid.

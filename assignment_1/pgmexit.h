@@ -46,7 +46,7 @@
 #define STR_NO_ROW_TAG "<row> tag was not found in output file name template"
 #define STR_NO_COL_TAG "<column> tag was not found in output file name template"
 
-#define STR_BAD_DIMENSION "Please specify the width and height dimensions as an integer greater than 0 and less than 65536"
-#define STR_BAD_ROW "Row must be an integer greater than or equal to 0 and less than the height (indexing from 0)"
-#define STR_BAD_COLUMN "Column must be an integer greater than or equal to 0 and less than the width (indexing from 0)"
+#define STR_BAD_DIMENSION "Specify the output file path and ensure dimensions are integers between 1 and 65535 inclusive"
+#define STR_BAD_ROW "Rows must be integers greater than or equal to 0 and less than the height (indexing from 0)"
+#define STR_BAD_COLUMN "Columns must be integers greater than or equal to 0 and less than the width (indexing from 0)"
 #define STR_BAD_TUPLE "Bad image assembly tuple. Expected format: \"(row column inputImage.pgm)\""
