@@ -15,6 +15,7 @@ pgma2b: ./pgma2b inputImage.pgm outputImage.pgm
 pgmb2a: ./pgmb2a inputImage.pgm outputImage.pgm
 pgmReduce: ./pgmReduce inputImage.pgm reduction_factor outputImage.pgm
 pgmTile: ./pgmTile inputImage.pgm tiling_factor outputImage_<row>_<column>.pgm (where <row> and <column> tags may appear anywhere in the output file name template)
+pgmAssemble: ./pgmAssemble outputImage.pgm width height (row column inputImage.pgm)+
 
 Running the test script
 1: chmod +x testscript.sh

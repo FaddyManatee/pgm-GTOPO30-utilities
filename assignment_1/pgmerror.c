@@ -24,7 +24,7 @@ typedef struct pgmErr
 static void createError(pgmErr *err, int code, char *prefix , char *string)
 {
     // Allocate enough memory to the error string and build it.
-    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 4, sizeof(char));
+    err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 10, sizeof(char));
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");

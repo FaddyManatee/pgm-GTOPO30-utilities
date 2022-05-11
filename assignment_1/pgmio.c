@@ -610,6 +610,8 @@ static void imageWriteChecks(pgmImage *image, FILE *file, char *path, int choice
 
     // Check if image has all required data to write to file.
     error = checkImageCanBeWritten(image, path);
+    if (error != NULL)
+        return;
 }
 
 
