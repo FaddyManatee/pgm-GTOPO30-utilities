@@ -30,7 +30,9 @@ int main(int argc, char **argv)
     // If the external error pointer is no longer null, a file read error has been detected.
     if (error != NULL)
     {
-        freeImage(inputImageOne);
+        if (inputImageOne != NULL)
+            freeImage(inputImageOne);
+
         return displayError(error);
     }
 
@@ -40,8 +42,12 @@ int main(int argc, char **argv)
     // If the external error pointer is no longer null, a file read error has been detected.
     if (error != NULL)
     {
-        freeImage(inputImageOne);
-        freeImage(inputImageTwo);
+        if (inputImageOne != NULL)
+            freeImage(inputImageOne);
+        
+        if (inputImageTwo != NULL)
+            freeImage(inputImageTwo);
+
         return displayError(error);
     }
 

@@ -239,9 +239,11 @@ pgmErr* checkComment(char *comment, char *path)
 {
     pgmErr *badCommentLine = (pgmErr *) malloc(sizeof(pgmErr));
 
-    int length = strlen(comment);
+    // Get last character. If not a new line, this is an invalid comment.
+    // A valid comment of length n: comment[n] == '\0', comment[n - 1] == '\n'
+    char lastChar = comment[strlen(comment) - 1];
     
-    if (comment == NULL || length > MAX_COMMENT_LINE_LENGTH)
+    if (comment == NULL || lastChar != '\n')
     {
         // We will free the error when we display it.
         createError(badCommentLine, EXIT_BAD_COMMENT_LINE, STR_BAD_COMMENT_LINE, path);
@@ -368,7 +370,7 @@ pgmErr* checkImageAllocated(pgmImage *image)
 /*
  *
  */
-pgmErr* checkRequiredData(pgmImage *image)
+pgmErr* checkRequiredData(pgmImage *image, char *path)
 {
     pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
 
@@ -380,27 +382,7 @@ pgmErr* checkRequiredData(pgmImage *image)
         getMaxGrayValue(image) > MAX_GRAY_VALUE)
     {
         // We will free the error when we display it.
-        createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
-        return rasterNotAllocated;
-    }
-
-    // Error not triggered. Free it.
-    free(rasterNotAllocated);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkRasterAllocated(pgmImage *image)
-{
-    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (getRaster(image) == NULL)
-    {
-        // We will free this error when we display it.
-        createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+        createError(rasterNotAllocated, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
         return rasterNotAllocated;
     }
 

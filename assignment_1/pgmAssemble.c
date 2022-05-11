@@ -207,6 +207,25 @@ int main(int argc, char **argv)
     // Initialise the image that we assemble the sub-images onto.
     pgmImage *image = createEmptyImage(imageWidth, imageHeight, largestGray, ASCII);
 
+    // Check that the image was allocated.
+    error = checkImageAllocated(image);
+
+    if (error != NULL)
+    {
+        for (count = 0; count < subImageAmount; count++)
+        {
+            if (subImages[count].path != NULL)
+                free(subImages[count].path);
+
+            if (subImages[count].image != NULL)
+                freeImage(subImages[count].image);
+        }
+        free(subImages);
+
+        return displayError(error);
+    }
+
+
     // Add the sub-images to the image.
     for (count = 0; count < subImageAmount; count++)
     {

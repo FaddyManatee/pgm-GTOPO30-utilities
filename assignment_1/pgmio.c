@@ -336,7 +336,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath, int *line)
         return;
 
     // Check that we have enough data to allocate memory to the image raster.
-    error = checkRequiredData(image);
+    error = checkRequiredData(image, filePath);
     if (error != NULL)
         return;
 
@@ -347,7 +347,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath, int *line)
     initImageRaster(image);
 
     // Double check raster was allocated properly.
-    error = checkRasterAllocated(image);
+    error = checkImageAllocated(image);
     if (error != NULL)
         return;
 
@@ -370,7 +370,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath, int *line)
  * Opens the file in read binary mode, and reads the image data. Data in the
  * header should be encoded in plaintext ASCII. The magic number is used to 
  * determine whether we need to interpret the raster data as bytes or ASCII.
- * Can return an error.
+ * Returns NULL if read failed.
  */
 pgmImage* readImage(char *filePath)
 {
@@ -387,79 +387,57 @@ pgmImage* readImage(char *filePath)
     // Initialise the image.
     pgmImage *newImage = createImage();
 
+    // Check that the image was allocated memory correctly.
+    error = checkImageAllocated(newImage);
+    if (newImage == NULL)
+        goto cleanup;
+
     FILE *inputFile = fopen(filePath, "rb");
 
     // Check that the file path exists.
     error = checkInvalidFileName(inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read comments that occur before the magic number
     readComments(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read magic number and check if an error occurred.
     readMagicNumber(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read comments that occur before the dimensions.
     readComments(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read width and height, and check if an error occurred.
     readDimensions(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read comments that occur before the maximum gray value.
     readComments(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read maximum gray value, and check if an error occurred.
     readMaxGrayValue(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read comments that occur before the raster.
     readComments(newImage, lineNumber, inputFile, filePath);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // Read raster data, and check if an error occurred.
     readRaster(newImage, inputFile, filePath, lineNumber);
     if (error != NULL)
-    {
-        newImage = NULL;
         goto cleanup;
-    }
 
     // We are finished with the file, tidy up.
     goto cleanup;
@@ -467,6 +445,9 @@ pgmImage* readImage(char *filePath)
     cleanup:
     if (inputFile != NULL)
         fclose(inputFile);
+    
+    if (error != NULL)
+        return NULL;
     
     return newImage;
 }

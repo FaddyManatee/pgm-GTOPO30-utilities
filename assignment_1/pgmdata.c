@@ -76,6 +76,11 @@ image* createImage()
 {
     // Allocate memory to a new image and set initial NULL/empty values. 
     image *newImage = (image *) malloc(sizeof(image));
+
+    // Check for failed memory allocation and return NULL if this occurred.
+    if (newImage == NULL)
+        return NULL;
+
     newImage->format = DEFAULT_VALUE;
     newImage->width = DEFAULT_VALUE;
     newImage->height = DEFAULT_VALUE;
@@ -85,10 +90,20 @@ image* createImage()
     
     // Allocate memory for storing comment lines and set initial NULL/empty values.
     newImage->comments = (comment *) malloc(sizeof(comment) * MAX_COMMENTS);
+
+    // Check for failed memory allocation and return NULL if this occurred.
+    if (newImage->comments == NULL)
+        return NULL;
+
     int x;
     for (x = 0; x < MAX_COMMENTS; x++)
     {
         newImage->comments[x].commentString = (char *) calloc(MAX_COMMENT_LINE_LENGTH, sizeof(char));
+
+        // Check for failed memory allocation and return NULL if this occurred.
+        if (newImage->comments[x].commentString == NULL)
+            return NULL;
+
         newImage->comments[x].exists = 0;
         newImage->comments[x].lineNumber = 0;
     }
@@ -136,6 +151,11 @@ image* createEmptyImage(int imageWidth, int imageHeight, int maxGray, int rawOrA
 {
     // Allocate memory to a new image and set the values.
     image *newImage = (image *) malloc(sizeof(image));
+
+    //Check for failed memory allocation.
+    if (newImage == NULL)
+        return NULL;
+
     newImage->format = rawOrAscii;
     newImage->width = imageWidth;
     newImage->height = imageHeight;
@@ -153,10 +173,18 @@ image* createEmptyImage(int imageWidth, int imageHeight, int maxGray, int rawOrA
 
     // Allocate memory for storing comment lines and set initial NULL/empty values.
     newImage->comments = (comment *) malloc(sizeof(comment) * MAX_COMMENTS);
+
+    if (newImage->comments == NULL)
+        return NULL;
+
     int x;
     for (x = 0; x < MAX_COMMENTS; x++)
     {
         newImage->comments[x].commentString = (char *) calloc(MAX_COMMENT_LINE_LENGTH, sizeof(char));
+
+        if (newImage->comments[x].commentString == NULL)
+            return NULL;
+            
         newImage->comments[x].exists = 0;
         newImage->comments[x].lineNumber = 0;
     }
