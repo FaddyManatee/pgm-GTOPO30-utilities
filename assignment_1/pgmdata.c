@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include "pgmlimits.h"
 
+// Enable this #define directive for testing memory allocation failure.
+// #define malloc(...) NULL
+
 
 // http://netpbm.sourceforge.net/doc/pgm.html 
 
@@ -184,7 +187,7 @@ image* createEmptyImage(int imageWidth, int imageHeight, int maxGray, int rawOrA
 
         if (newImage->comments[x].commentString == NULL)
             return NULL;
-            
+
         newImage->comments[x].exists = 0;
         newImage->comments[x].lineNumber = 0;
     }

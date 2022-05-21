@@ -8,13 +8,16 @@
 // Includes pgmio.h. We can use pgm input/output functions and track the external error.
 #include "pgmgroup.h"
 
-void freeTiles(pgmImage **tiles, int factor)
+void freeTiles(pgmImage ***tiles, int factor)
 {
-    int x;
-    for (x = 0; x < factor * factor; x++)
+    int row;
+    int column;
+
+    for (row = 0; row < factor; row++)
     {
-        freeImage(tiles[x]);
+        free(tiles[row]);
     }
+    free(tiles);
 }
 
 
@@ -139,18 +142,18 @@ int main(int argc, char **argv)
     }
 
     // If checks pass, tile the image.
-    pgmImage** tiledImage = tile(inputImage, factor);
+    pgmImage*** tiledImage = tile(inputImage, factor);
 
     int row;
     int column;
-    int tileNumber = 0;
+
     for (row = 0; row < factor; row++)
     {
         for (column = 0; column < factor; column++)
         {
             // Write each image of the tile to disk.
             char *path = buildPath(argv[3], row, column);
-            echoImage(tiledImage[tileNumber], path);
+            echoImage(tiledImage[row][column], path);
 
             // Check if an error occurred when writing the image.
             if (error != NULL)
@@ -159,7 +162,6 @@ int main(int argc, char **argv)
                 freeTiles(tiledImage, factor);
                 return displayError(error);
             }
-            tileNumber++;
 
             // Memory was allocated to path during buildPath(), free it.
             free(path);

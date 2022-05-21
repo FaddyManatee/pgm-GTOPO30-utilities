@@ -9,7 +9,7 @@ typedef struct point
 } point;
 
 
-static pgmImage** createTiles(pgmImage *image, int factor)
+static pgmImage*** createTiles(pgmImage *image, int factor)
 {
     /*
      * Image tiles will be stored in an array and stored sequentially. The order
@@ -28,41 +28,36 @@ static pgmImage** createTiles(pgmImage *image, int factor)
     int tileHeight = (getHeight(image) / factor);
 
     // Create nxn image structs.
-    pgmImage **tiles = (pgmImage **) malloc(sizeof(pgmImage *) * factor * factor);
-    int x;
-    for (x = 0; x < factor * factor; x++)
+    int row;
+    int column;
+
+    pgmImage ***tiles = (pgmImage ***) malloc(sizeof(pgmImage **) * factor);
+
+    for (row = 0; row < factor; row++)
     {
-        tiles[x] = createImage();
+        tiles[row] = (pgmImage **) malloc(sizeof(pgmImage *) * factor);
     }
     
     // Initialise the tiles and set their dimensions.
-    int row;
-    int column;
-    int tileNumber = 0;
     for (row = 0; row < factor; row++)
     {
         for (column = 0; column < factor; column++)
         {
-            if (tileNumber < factor * factor)
+            if (row < factor - 1 && column < factor - 1)
             {
-                if (row < factor - 1 && column < factor - 1)
-                {
-                    tiles[tileNumber] = createEmptyImage(tileWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
-                }
-                else if (row < factor - 1 && column == factor - 1)
-                {
-                    tiles[tileNumber] = createEmptyImage(tileRightWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
-                }
-                else if (row == factor - 1 && column < factor - 1)
-                {
-                    tiles[tileNumber] = createEmptyImage(tileWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));   
-                }
-                else if (row == factor - 1 && column == factor - 1)
-                {
-                    tiles[tileNumber] = createEmptyImage(tileRightWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));
-                }
-
-                tileNumber++;
+                tiles[row][column] = createEmptyImage(tileWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
+            }
+            else if (row < factor - 1 && column == factor - 1)
+            {
+                tiles[row][column] = createEmptyImage(tileRightWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
+            }
+            else if (row == factor - 1 && column < factor - 1)
+            {
+                tiles[row][column] = createEmptyImage(tileWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));   
+            }
+            else if (row == factor - 1 && column == factor - 1)
+            {
+                tiles[row][column] = createEmptyImage(tileRightWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));
             }
         }
     }
@@ -71,13 +66,19 @@ static pgmImage** createTiles(pgmImage *image, int factor)
 }
 
 
-static point* calculateReadPoints(pgmImage *image, pgmImage **tiles, int factor)
+static point** calculateReadPoints(pgmImage *image, pgmImage ***tiles, int factor)
 {
-    point *points = (point *) malloc(sizeof(point) * factor * factor);
+    // Allocate memory to the coordinates where each tile begins.
+    point **points = (point **) malloc(sizeof(point *) * factor);
 
     int row;
     int column;
-    int tileNumber = 0;
+
+    for (row = 0; row < factor; row++)
+    {
+        points[row] = (point *) malloc(sizeof(point) * factor);
+    }
+
     int currentWidth = 0;
     int currentHeight = 0;
 
@@ -85,57 +86,59 @@ static point* calculateReadPoints(pgmImage *image, pgmImage **tiles, int factor)
     {
         for (column = 0; column < factor; column++)
         {   
-            points[tileNumber].widthCoord = currentWidth;
-            points[tileNumber].heightCoord = currentHeight;
+            points[row][column].widthCoord = currentWidth;
+            points[row][column].heightCoord = currentHeight;
 
-            currentWidth = currentWidth + getWidth(tiles[tileNumber]);
-            tileNumber++;
-
-            if (tileNumber == factor * factor)
-                return points;
+            currentWidth = currentWidth + getWidth(tiles[row][column]);
         }
+
         currentWidth = 0;
-        currentHeight = currentHeight + getHeight(tiles[tileNumber]);
+        currentHeight = currentHeight + getHeight(tiles[row][0]);
     }
+
+    return points;
 }
 
 
-pgmImage** tile(pgmImage *image, int factor)
+pgmImage*** tile(pgmImage *image, int factor)
 {
     /* 
      * We need to split the input image into (factor * factor) smaller images. We
      * need an array of (factor * factor) image structs.
      */
-    pgmImage **imageTiles = createTiles(image, factor);
+    pgmImage ***imageTiles = createTiles(image, factor);
 
-    point *readPoints = calculateReadPoints(image, imageTiles, factor);
+    point **readPoints = calculateReadPoints(image, imageTiles, factor);
 
     int row;
     int column;
     int subRow;
     int subColumn;
-    int tileNumber = 0;
 
+    // Loop over tiles by row and column.
     for (row = 0; row < factor; row++)
     {
         for (column = 0; column < factor; column++)
         {
-            for (subRow = 0; subRow < getHeight(imageTiles[tileNumber]); subRow++)
+            // Loop over pixels within tiles by row and column.
+            for (subRow = 0; subRow < getHeight(imageTiles[row][column]); subRow++)
             {
-                for (subColumn = 0; subColumn < getWidth(imageTiles[tileNumber]); subColumn++)
+                for (subColumn = 0; subColumn < getWidth(imageTiles[row][column]); subColumn++)
                 {
-                    setPixel(imageTiles[tileNumber], getPixel(image, readPoints[tileNumber].heightCoord + subRow, readPoints[tileNumber].widthCoord + subColumn), subRow, subColumn);
+                    setPixel(imageTiles[row][column], getPixel(image, readPoints[row][column].heightCoord + subRow, readPoints[row][column].widthCoord + subColumn), subRow, subColumn);
                 }
-            }
-            tileNumber++;
-
-            if (tileNumber == factor * factor)
-            {
-                free(readPoints);
-                return imageTiles;
             }
         }
     }
+
+    // Free memory allocated to read points.
+    for (row = 0; row < factor; row++)
+    {
+        free(readPoints[row]);
+    }
+    free(readPoints);
+
+    return imageTiles;
 }
 
 

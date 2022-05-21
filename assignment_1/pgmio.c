@@ -384,19 +384,20 @@ pgmImage* readImage(char *filePath)
     line = 0;
     lineNumber = &line;
 
+    // Open a file for reading.
+    FILE *inputFile = fopen(filePath, "rb");
+    
+    // Check that the file path exists.
+    error = checkInvalidFileName(inputFile, filePath);
+    if (error != NULL)
+        goto cleanup;
+
     // Initialise the image.
     pgmImage *newImage = createImage();
 
     // Check that the image was allocated memory correctly.
     error = checkImageAllocated(newImage);
     if (newImage == NULL)
-        goto cleanup;
-
-    FILE *inputFile = fopen(filePath, "rb");
-
-    // Check that the file path exists.
-    error = checkInvalidFileName(inputFile, filePath);
-    if (error != NULL)
         goto cleanup;
 
     // Read comments that occur before the magic number

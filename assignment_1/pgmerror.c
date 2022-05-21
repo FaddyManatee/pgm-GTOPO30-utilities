@@ -28,9 +28,15 @@ static void createError(pgmErr *err, int code, char *prefix , char *string)
     err->errorCode = code;
     strcat(err->errorMsg, prefix);
     strcat(err->errorMsg, " ");
-    strcat(err->errorMsg, "(");
+
+    if (strlen(string) > 0)
+        strcat(err->errorMsg, "(");
+
     strcat(err->errorMsg, string);
-    strcat(err->errorMsg, ")");
+
+    if (strlen(string) > 0)
+        strcat(err->errorMsg, ")");
+        
     strcat(err->errorMsg, "\n");
 }
 

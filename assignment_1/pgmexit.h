@@ -26,7 +26,7 @@
 #define STR_BAD_MAX_GRAY_VALUE "ERROR: Bad Max Gray Value"
 
 #define EXIT_IMAGE_MALLOC_FAILED 7
-#define STR_IMAGE_MALLOC_FAILED "ERROR Image Malloc Failed"
+#define STR_IMAGE_MALLOC_FAILED "ERROR: Image Malloc Failed"
 
 #define EXIT_BAD_DATA 8
 #define STR_BAD_DATA "ERROR: Bad Data"
