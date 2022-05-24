@@ -57,8 +57,9 @@ void printLand(gtopoDEM *inputDEM, char *filePath, int sea, int hill, int mounta
             }
         }
 
-        // Append a new line character to the end of each row.
-        fputc('\n', outputFile);
+        // Append a new line character to the end of each row, except from the last.
+        if (row != getHeight(inputDEM) - 1)
+            fputc('\n', outputFile);
     }
 
     // We are now done with the file. Close it.

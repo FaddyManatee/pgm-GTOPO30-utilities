@@ -206,6 +206,8 @@ int main(int argc, char **argv)
     }
 
     // Display success string and exit the program.
+    freeSubImages(subImages, subImageAmount);
+    freeImage(image);
     printf(STR_ASSEMBLED);
     return EXIT_NO_ERRORS;
 }

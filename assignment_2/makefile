@@ -1,4 +1,4 @@
-all: gtopoEcho gtopoComp gtopoReduce gtopoTile gtopoAssemble gtopoPrintLand
+all: gtopoEcho gtopoComp gtopoReduce gtopoTile gtopoAssemble gtopoPrintLand gtopoAssembleReduce
 
 gtopoEcho: gtopoEcho.o gtopoio.o gtopoerror.o gtopodata.o
 	gcc gtopoEcho.o gtopoio.o gtopoerror.o gtopodata.o -o gtopoEcho -g
@@ -18,6 +18,9 @@ gtopoAssemble: gtopoAssemble.o gtopogroup.o gtopoio.o gtopoerror.o gtopodata.o
 gtopoPrintLand: gtopoPrintLand.o gtopoio.o gtopoerror.o gtopodata.o
 	gcc gtopoPrintLand.o gtopoio.o gtopoerror.o gtopodata.o -o gtopoPrintLand -g
 
+gtopoAssembleReduce: gtopoAssembleReduce.o gtoposhrink.o gtopogroup.o gtopoio.o gtopoerror.o gtopodata.o
+	gcc gtopoAssembleReduce.o gtoposhrink.o gtopogroup.o gtopoio.o gtopoerror.o gtopodata.o -o gtopoAssembleReduce -g -lm
+
 gtopoEcho.o: gtopoEcho.c
 	gcc gtopoEcho.c -c -g
 
@@ -35,6 +38,9 @@ gtopoAssemble.o: gtopoAssemble.c
 
 gtopoPrintLand.o: gtopoPrintLand.c
 	gcc gtopoPrintLand.c -c -g
+
+gtopoAssembleReduce.o: gtopoAssembleReduce.c
+	gcc gtopoAssembleReduce.c -c -g
 
 gtopoio.o: gtopoio.c gtopodata.h gtopoerror.h gtopolimits.h
 	gcc gtopoio.c -c -g
@@ -55,5 +61,5 @@ gtopogroup.o: gtopogroup.c gtopodata.h
 	gcc gtopogroup.c -c -g
 
 clean:
-	rm *.o gtopoEcho gtopoComp gtopoReduce gtopoTile gtopoAssemble gtopoPrintLand
+	rm *.o gtopoEcho gtopoComp gtopoReduce gtopoTile gtopoAssemble gtopoPrintLand gtopoAssembleReduce
 		

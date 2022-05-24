@@ -33,7 +33,7 @@ void freeSubDEMs(gtopoSubDEM *subDEMs, int amount)
 int main(int argc, char **argv)
 {
     /*
-     * Check argument count is greater than or equal to 9. The program requires 
+     * Check argument count is greater than or equal to 10. The program requires 
      * at least 10 arguments to be provided:
      * 
      * argv[0] = Program name
@@ -59,11 +59,11 @@ int main(int argc, char **argv)
 
     if (argc == 1)
     {
-        printf("Usage: ./pgmAssemble outputFile width height (row column inputFile width height)+\n", argv[0]);
+        printf("Usage: ././gtopoAssembleReduce outputArray.gtopo width height (row column inputArray.gtopo width height)+\n", argv[0]);
         return EXIT_NO_ERRORS;
     }
     
-    // We expect a minimum of 9 arguments.
+    // We expect a minimum of 10 arguments.
     if (argc < 10)
     {
         printf(STR_BAD_ARGS_COUNT);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
      * Has to be an integer greater than one.
      */
     char *factor;
-    int factorDEM = strtol(argv[4], &height, 10);
+    int factorDEM = strtol(argv[4], &factor, 10);
 
     error = checkInvalidFactor(factorDEM, *factor);
     if (error != NULL)
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
     }
 
     // Reduce the assembled DEM data using the factor.
-    gtopoDEM *reducedDEM = reduce(parentDEM, factor);
+    gtopoDEM *reducedDEM = reduce(parentDEM, factorDEM);
 
     // Write the reduced final DEM data to disk with the path stored in argv[1].
     echoDEM(reducedDEM, argv[1]);
