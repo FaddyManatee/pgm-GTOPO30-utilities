@@ -35,7 +35,7 @@
 #define STR_OUTPUT_FAILED "ERROR: Output Failed"
 
 #define EXIT_BAD_LAYOUT 10
-#define STR_BAD_LAYOUT "ERROR: Bad Layout"
+#define STR_BAD_LAYOUT "ERROR: Bad Layout\n"
 
 #define EXIT_MISC 100
 #define STR_MISC "ERROR: Miscellaneous"

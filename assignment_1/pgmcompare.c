@@ -50,13 +50,6 @@ int compare(pgmImage *imageOne, pgmImage *imageTwo)
     if (heightImageOne != heightImageTwo)
         return 0;
 
-    /*
-     * We now know the dimensions of both images are the same, so we can calculate
-     * the number of pixels that appear in both image. We use the dimensions of
-     * image 1 here.
-     */
-    int numberOfPixels = widthImageOne * heightImageOne;
-
     // Get the maximum gray value from both input images.
     int maxGrayImageOne = getMaxGrayValue(imageOne);
     int maxGrayImageTwo = getMaxGrayValue(imageTwo);

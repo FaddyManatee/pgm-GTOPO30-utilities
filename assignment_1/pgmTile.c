@@ -158,7 +158,7 @@ int main(int argc, char **argv)
             // Check if an error occurred when writing the image.
             if (error != NULL)
             {
-                free(inputImage);
+                freeImage(inputImage);
                 freeTiles(tiledImage, factor);
                 return displayError(error);
             }

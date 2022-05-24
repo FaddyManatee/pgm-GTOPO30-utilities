@@ -1,4 +1,4 @@
-#include "pgmio.h"
+#include "gtopoio.h"
 
-pgmImage*** tile(pgmImage *image, int factor);
-int addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn);
+gtopoDEM*** tile(gtopoDEM *inputDEM, int factor);
+int addDEM(gtopoDEM *parent, gtopoDEM *child, int startRow, int startColumn);

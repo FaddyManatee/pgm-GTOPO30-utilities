@@ -347,7 +347,7 @@ static void readRaster(pgmImage *image, FILE *file, char *filePath, int *line)
     initImageRaster(image);
 
     // Double check raster was allocated properly.
-    error = checkImageAllocated(image);
+    error = checkRasterAllocated(getRaster(image), getWidth(image), getHeight(image));
     if (error != NULL)
         return;
 
@@ -397,7 +397,7 @@ pgmImage* readImage(char *filePath)
 
     // Check that the image was allocated memory correctly.
     error = checkImageAllocated(newImage);
-    if (newImage == NULL)
+    if (error != NULL)
         goto cleanup;
 
     // Read comments that occur before the magic number

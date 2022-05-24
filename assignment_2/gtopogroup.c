@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pgmdata.h"
-#include "pgmerror.h"
+#include "gtopodata.h"
+#include "gtopoerror.h"
 
 typedef struct point
 {
@@ -10,27 +10,27 @@ typedef struct point
 } point;
 
 
-static pgmImage*** createTiles(pgmImage *image, int factor)
+static gtopoDEM*** createTiles(gtopoDEM *targetDEM, int factor)
 {
     // Calculate the width of right-most tiles.
-    int tileRightWidth = (getWidth(image) / factor) + (getWidth(image) % factor);
+    int tileRightWidth = (getWidth(targetDEM) / factor) + (getWidth(targetDEM) % factor);
     
     // Calculate the height of bottom-most tiles.
-    int tileBottomHeight = (getHeight(image) / factor) + (getHeight(image) % factor);
+    int tileBottomHeight = (getHeight(targetDEM) / factor) + (getHeight(targetDEM) % factor);
 
-    // Calculate width and height of pixels that aren't at on the very right or bottom.
-    int tileWidth = (getWidth(image) / factor);
-    int tileHeight = (getHeight(image) / factor);
+    // Calculate width and height of elevation points that aren't at on the very right or bottom.
+    int tileWidth = (getWidth(targetDEM) / factor);
+    int tileHeight = (getHeight(targetDEM) / factor);
 
-    // Create nxn image structs.
+    // Create nxn DEM file structs.
     int row;
     int column;
 
-    pgmImage ***tiles = (pgmImage ***) malloc(sizeof(pgmImage **) * factor);
+    gtopoDEM ***tiles = (gtopoDEM ***) malloc(sizeof(gtopoDEM **) * factor);
 
     for (row = 0; row < factor; row++)
     {
-        tiles[row] = (pgmImage **) malloc(sizeof(pgmImage *) * factor);
+        tiles[row] = (gtopoDEM **) malloc(sizeof(gtopoDEM *) * factor);
     }
     
     // Initialise the tiles and set their dimensions.
@@ -40,23 +40,19 @@ static pgmImage*** createTiles(pgmImage *image, int factor)
         {
             if (row < factor - 1 && column < factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileWidth, tileHeight,
-                    getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createDEM(tileWidth, tileHeight);
             }
             else if (row < factor - 1 && column == factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileRightWidth, tileHeight, 
-                    getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createDEM(tileRightWidth, tileHeight);
             }
             else if (row == factor - 1 && column < factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileWidth, tileBottomHeight,
-                    getMaxGrayValue(image), determineFormat(image));   
+                tiles[row][column] = createDEM(tileWidth, tileBottomHeight);   
             }
             else if (row == factor - 1 && column == factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileRightWidth, tileBottomHeight,
-                    getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createDEM(tileRightWidth, tileBottomHeight);
             }
         }
     }
@@ -65,7 +61,7 @@ static pgmImage*** createTiles(pgmImage *image, int factor)
 }
 
 
-static point** calculateReadPoints(pgmImage *image, pgmImage ***tiles, int factor)
+static point** calculateReadPoints(gtopoDEM *targetDEM, gtopoDEM ***tiles, int factor)
 {
     // Allocate memory to the coordinates where each tile begins.
     point **points = (point **) malloc(sizeof(point *) * factor);
@@ -99,16 +95,16 @@ static point** calculateReadPoints(pgmImage *image, pgmImage ***tiles, int facto
 }
 
 
-pgmImage*** tile(pgmImage *image, int factor)
+gtopoDEM*** tile(gtopoDEM *inputDEM, int factor)
 {
     /* 
      * We need to split the input image into (factor * factor) smaller images. We
      * need an array of (factor * factor) image structs.
      */
-    pgmImage ***imageTiles = createTiles(image, factor);
+    gtopoDEM ***DEMTiles = createTiles(inputDEM, factor);
 
     // Calculate the coordinates where each tile begins (top-left corner).
-    point **readPoints = calculateReadPoints(image, imageTiles, factor);
+    point **readPoints = calculateReadPoints(inputDEM, DEMTiles, factor);
 
     int row;
     int column;
@@ -121,13 +117,13 @@ pgmImage*** tile(pgmImage *image, int factor)
         for (column = 0; column < factor; column++)
         {
             // Loop over pixels within tiles by row and column.
-            for (subRow = 0; subRow < getHeight(imageTiles[row][column]); subRow++)
+            for (subRow = 0; subRow < getHeight(DEMTiles[row][column]); subRow++)
             {
-                for (subColumn = 0; subColumn < getWidth(imageTiles[row][column]); subColumn++)
+                for (subColumn = 0; subColumn < getWidth(DEMTiles[row][column]); subColumn++)
                 {
                     // Assign current pixel to corresponding tile.
-                    setPixel(imageTiles[row][column], 
-                        getPixel(image, readPoints[row][column].heightCoord + subRow,
+                    setElevation(DEMTiles[row][column], 
+                        getElevation(inputDEM, readPoints[row][column].heightCoord + subRow,
                             readPoints[row][column].widthCoord + subColumn),
                         subRow, subColumn);
                 }
@@ -142,22 +138,22 @@ pgmImage*** tile(pgmImage *image, int factor)
     }
     free(readPoints);
 
-    return imageTiles;
+    return DEMTiles;
 }
 
 
 /*
- * Adds the child image to the parent image with the top-left corner of the image
+ * Adds the child DEM to the parent DEM with the top-left corner of the DEM
  * placed at the specified row and column values. Returns 0 on success and 1 on
- * failure if pixels of a sub-image are placed outside of the larger image.
+ * failure if elevation points of a sub-DEM are placed outside of the larger DEM.
  */
-int addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
+int addDEM(gtopoDEM *parent, gtopoDEM *child, int startRow, int startColumn)
 {
     int parentRow;
     int parentColumn;
     int childRow = 0;
     int childColumn = 0;
-    int pixelsWritten = 0;
+    int pointsWritten = 0;
 
     for (parentRow = startRow; parentRow < getHeight(parent); parentRow++)
     {
@@ -173,9 +169,9 @@ int addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
                 break;
             }
 
-            setPixel(parent, getPixel(child, childRow, childColumn), parentRow, parentColumn);
+            setElevation(parent, getElevation(child, childRow, childColumn), parentRow, parentColumn);
             childColumn++;
-            pixelsWritten++;
+            pointsWritten++;
         }
 
         childRow++;
@@ -183,7 +179,7 @@ int addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
     }
 
     // Check that all pixels of the child/sub-image were written.
-    if (pixelsWritten != getWidth(child) * getHeight(child))
+    if (pointsWritten != getWidth(child) * getHeight(child))
     {
         return 1;
     }

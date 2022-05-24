@@ -11,7 +11,6 @@ int getWidth(pgmImage *image);
 int getHeight(pgmImage *image);
 int getMaxGrayValue(pgmImage *image);
 unsigned char** getRaster(pgmImage *image);
-int getBytes(pgmImage *image);
 unsigned char getPixel(pgmImage *image, int row, int column);
 char* setComment(pgmImage *image, int lineNo);
 void initImageRaster(pgmImage *image);

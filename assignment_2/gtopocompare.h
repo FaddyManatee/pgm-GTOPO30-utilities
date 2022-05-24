@@ -1,3 +1,3 @@
-#include "pgmio.h"
+#include "gtopoio.h"
 
-int compare(pgmImage *imageOne, pgmImage *imageTwo);
+int compare(gtopoDEM *firstFile, gtopoDEM *secondFile);

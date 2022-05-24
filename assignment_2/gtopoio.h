@@ -1,10 +1,9 @@
-#include "pgmdata.h"
-#include "pgmlimits.h"
-#include "pgmerror.h"
-#include "pgmexit.h"
+#include "gtopodata.h"
+#include "gtopolimits.h"
+#include "gtopoerror.h"
+#include "gtopoexit.h"
 
-extern pgmError *error;
+extern gtopoError *error;
 
-pgmImage* readImage(char *filePath);
-void echoImage(pgmImage *image, char *filePath);
-void convert(pgmImage *image, char *filePath, int binaryOrAscii);
+gtopoDEM* readDEM(char *filePath, int width, int height);
+void echoDEM(gtopoDEM *inputFile, char *filePath);

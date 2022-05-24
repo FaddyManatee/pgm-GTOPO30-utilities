@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pgmdata.h"
-#include "pgmlimits.h"
-#include "pgmexit.h"
+#include "gtopodata.h"
+#include "gtopolimits.h"
+#include "gtopoexit.h"
 
 
 /*
@@ -11,17 +11,17 @@
  * displayed to the user to describe what went wrong. Data of this type is
  * initialised whenever an error is detected.
  */
-typedef struct pgmErr
+typedef struct gtopoErr
 {
     int errorCode;
     char *errorMsg;
-} pgmErr;
+} gtopoErr;
 
 
 /*
  *
  */
-static void createError(pgmErr *err, int code, char *prefix , char *string)
+static void createError(gtopoErr *err, int code, char *prefix , char *string)
 {
     // Allocate enough memory to the error string and build it.
     err->errorMsg = (char *) calloc(strlen(prefix) + strlen(string) + 10, sizeof(char));
@@ -44,9 +44,9 @@ static void createError(pgmErr *err, int code, char *prefix , char *string)
 /*
  * Checks whenever a file stream failed to open.
  */
-pgmErr* checkInvalidFileName(FILE *file, char *path)
+gtopoErr* checkInvalidFileName(FILE *file, char *path)
 {
-    pgmErr *invalidFileName = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *invalidFileName = (gtopoErr *) malloc(sizeof(gtopoErr));
 
     if (file == NULL)
     {
@@ -63,9 +63,9 @@ pgmErr* checkInvalidFileName(FILE *file, char *path)
 /*
  * Checks whether the argument for factor is greater than 0.
  */
-pgmErr* checkInvalidFactor(int factor, char lastChar)
+gtopoErr* checkInvalidFactor(int factor, char lastChar)
 {
-    pgmErr *invalidFactor = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *invalidFactor = (gtopoErr *) malloc(sizeof(gtopoErr));
 
     if (factor <= 0 || lastChar != '\0')
     {
@@ -79,31 +79,49 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
 
 
 /*
- * Checks whether the argument for a dimension is greater than 0 and less than 65536.
+ * Checks whether the argument for the width of a DEM is correct.
  */
-pgmErr* checkInvalidDimensionSize(int dimension, char lastChar)
+gtopoErr* checkInvalidWidth(int width, char lastChar)
 {
-    pgmErr *invalidDimension = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *invalidWidth = (gtopoErr *) malloc(sizeof(gtopoErr));
 
-    if (dimension < MIN_IMAGE_DIMENSION || dimension > MAX_IMAGE_DIMENSION || lastChar != '\0')
+    if (width < MIN_DIMENSION || width > MAX_COLUMNS || lastChar != '\0')
     {
-        createError(invalidDimension, EXIT_MISC, STR_MISC, STR_BAD_DIMENSION);
-        return invalidDimension;
+        createError(invalidWidth, EXIT_MISC, STR_MISC, STR_BAD_DIMENSION);
+        return invalidWidth;
     }
 
-    free(invalidDimension);
+    free(invalidWidth);
     return NULL;
 }
 
 
 /*
- * Checks whether a row/column position for image assembly is valid
+ * Checks whether the argument for the height of a DEM is correct.
  */
-pgmErr* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar)
+gtopoErr* checkInvalidHeight(int height, char lastChar)
 {
-    pgmErr *invalidPosition = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *invalidHeight = (gtopoErr *) malloc(sizeof(gtopoErr));
 
-    if (axisPosition < MIN_IMAGE_DIMENSION - 1 || axisPosition > axisEnd - 1 || lastChar != '\0')
+    if (height < MIN_DIMENSION || height > MAX_ROWS || lastChar != '\0')
+    {
+        createError(invalidHeight, EXIT_MISC, STR_MISC, STR_BAD_DIMENSION);
+        return invalidHeight;
+    }
+
+    free(invalidHeight);
+    return NULL;
+}
+
+
+/*
+ * Checks whether a row/column position for GTOPO assembly is valid
+ */
+gtopoErr* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar)
+{
+    gtopoErr *invalidPosition = (gtopoErr *) malloc(sizeof(gtopoErr));
+
+    if (axisPosition < MIN_DIMENSION - 1 || axisPosition > axisEnd - 1 || lastChar != '\0')
     {
         createError(invalidPosition, EXIT_MISC, STR_MISC, STR_BAD_ROW);
         return invalidPosition;
@@ -115,30 +133,12 @@ pgmErr* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar)
 
 
 /*
- * Checks whether a tuple for image assembly contains a valid start column.
- */
-pgmErr* checkInvalidColumn(int column, int totalColumns, char lastChar)
-{
-    pgmErr *invalidColumn = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (column < MIN_IMAGE_DIMENSION - 1 || column > totalColumns - 1 || lastChar != '\0')
-    {
-        createError(invalidColumn, EXIT_MISC, STR_MISC, STR_BAD_COLUMN);
-        return invalidColumn;
-    }
-
-    free(invalidColumn);
-    return NULL;
-}
-
-
-/*
  * Checks whether <row> and <column> tags are present in the template output file
  * names for pgmTile.
  */
-pgmErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
+gtopoErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
 {
-    pgmErr *tagMissing = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *tagMissing = (gtopoErr *) malloc(sizeof(gtopoErr));
 
     char *rowTagAddress = strstr(template, rowTag);
     char *columnTagAddress = strstr(template, colTag);
@@ -165,30 +165,11 @@ pgmErr* checkTagsPresent(char *template, char *rowTag, char *colTag)
 
 
 /*
- * 
- */
-pgmErr* checkEOF(FILE *file, char *path)
-{
-    pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (feof(file))
-    {
-        // We will free the error when we display it.
-        createError(eofDetected, EXIT_BAD_DATA, STR_BAD_DATA, path);
-        return eofDetected;
-    }
-    
-    free(eofDetected);
-    return NULL;
-}
-
-
-/*
  *
  */
-pgmErr* checkBinaryEOF(int scanned, char *path)
+gtopoErr* checkEOF(int scanned, char *path)
 {
-    pgmErr *eofDetected = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *eofDetected = (gtopoErr *) malloc(sizeof(gtopoErr));
 
     if (scanned == 0)
     {
@@ -205,164 +186,30 @@ pgmErr* checkBinaryEOF(int scanned, char *path)
 /*
  *
  */
-pgmErr* checkComment(char *comment, char *path)
+gtopoErr* checkDEMallocated(gtopoDEM *targetDEM)
 {
-    pgmErr *badCommentLine = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *notAllocated = (gtopoErr *) malloc(sizeof(gtopoErr));
+    signed short **raster = getRaster(targetDEM);
 
-    // Get last character. If not a new line, this is an invalid comment.
-    // A valid comment of length n: comment[n] == '\0', comment[n - 1] == '\n'
-    char lastChar = comment[strlen(comment) - 1];
-    
-    if (comment == NULL || lastChar != '\n')
+    if (targetDEM == NULL || raster == NULL)
     {
         // We will free the error when we display it.
-        createError(badCommentLine, EXIT_BAD_COMMENT_LINE, STR_BAD_COMMENT_LINE, path);
-        return badCommentLine;
-    }
-    
-    free(badCommentLine);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkCommentLimit(char *comment)
-{
-    pgmErr *commentLimitExceeded = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (comment == NULL)
-    {
-        // We will free the error when we display it.
-        createError(commentLimitExceeded, EXIT_MISC, STR_COMMENT_LIMIT, "");
-        return commentLimitExceeded;
-    }
-
-    // Error not triggered. Free it.
-    free(commentLimitExceeded);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkInvalidMagicNo(unsigned short *magicNo, char *path)
-{
-    pgmErr *invalidMagicNo = (pgmErr *) malloc(sizeof(pgmErr));
-    
-    if ((*magicNo != MAGIC_NUMBER_ASCII_PGM) && (*magicNo != MAGIC_NUMBER_RAW_PGM))
-    {
-        // We will free the error when we display it.
-        createError(invalidMagicNo, EXIT_BAD_MAGIC_NUMBER, STR_BAD_MAGIC_NUMBER, path);
-        return invalidMagicNo;
-    }
-
-    // Error not triggered. Free it.
-    free(invalidMagicNo);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkInvalidDimensions(int width, int height, int scanned, char *path)
-{
-    pgmErr *invalidDimensions = (pgmErr *) malloc(sizeof(pgmErr));
-
-    /* 
-     * We expect fscanf to have scanned 2 integers, one for width and height.
-     * We also expect the values for width and height fall within their valid range.
-     */
-    if (scanned != 2 ||
-        width < MIN_IMAGE_DIMENSION || 
-        width > MAX_IMAGE_DIMENSION ||
-        height < MIN_IMAGE_DIMENSION ||
-        height > MAX_IMAGE_DIMENSION)
-    {
-        // We will free the error when we display it.
-        createError(invalidDimensions, EXIT_BAD_DIMENSIONS, STR_BAD_DIMENSIONS, path);
-        return invalidDimensions;
-    }
-
-    // Error not triggered. Free it.
-    free(invalidDimensions);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkInvalidMaxGrayValue(int maxGray, int scanned, char *path)
-{
-    pgmErr *invalidMaxGrayValue = (pgmErr *) malloc(sizeof(pgmErr));
-
-    /* 
-     * We expect fscanf to have scanned 1 unsigned integer for maximum gray value.
-     * We also expect the value for maximum gray value to fall within its valid range.
-     */
-    if (scanned != 1 || maxGray < MIN_GRAY_VALUE || maxGray > MAX_GRAY_VALUE)
-    {
-        // We will free the error when we display it.
-        createError(invalidMaxGrayValue, EXIT_BAD_MAX_GRAY_VALUE, STR_BAD_MAX_GRAY_VALUE, path);
-        return invalidMaxGrayValue;
-    }
-
-    // Error not triggered. Free it.
-    free(invalidMaxGrayValue);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkImageAllocated(pgmImage *image)
-{
-    pgmErr *imageNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (image == NULL)
-    {
-        // We will free the error when we display it.
-        createError(imageNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
-        return imageNotAllocated;
-    }
-    
-    // Error not triggered. Free it.
-    free(imageNotAllocated);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkRasterAllocated(unsigned char **raster, int width, int height)
-{
-    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (raster == NULL)
-    {
-        // We will free the error when we display it.
-        createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
-        return rasterNotAllocated;
+        createError(notAllocated, EXIT_MALLOC_FAILED, STR_MALLOC_FAILED, "");
+        return notAllocated;
     }
 
     int row;
-    for (row = 0; row < height; row++)
+    for (row = 0; row < getHeight(targetDEM); row++)
     {
         if (raster[row] == NULL)
         {
-            createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
-            return rasterNotAllocated;
+            createError(notAllocated, EXIT_MALLOC_FAILED, STR_MALLOC_FAILED, "");
+            return notAllocated;
         }
     }
     
     // Error not triggered. Free it.
-    free(rasterNotAllocated);
+    free(notAllocated);
     return NULL;
 }
 
@@ -370,44 +217,19 @@ pgmErr* checkRasterAllocated(unsigned char **raster, int width, int height)
 /*
  *
  */
-pgmErr* checkRequiredData(pgmImage *image, char *path)
+gtopoErr* checkElevation(signed short elevation, int scanned, char *path)
 {
-    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *badElevation = (gtopoErr *) malloc(sizeof(gtopoErr));
 
-    if (getWidth(image) < MIN_IMAGE_DIMENSION ||
-        getWidth(image) > MAX_IMAGE_DIMENSION ||
-        getHeight(image) < MIN_IMAGE_DIMENSION ||
-        getHeight(image) > MAX_IMAGE_DIMENSION ||
-        getMaxGrayValue(image) < MIN_GRAY_VALUE ||
-        getMaxGrayValue(image) > MAX_GRAY_VALUE)
-    {
-        // We will free the error when we display it.
-        createError(rasterNotAllocated, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
-        return rasterNotAllocated;
-    }
-
-    // Error not triggered. Free it.
-    free(rasterNotAllocated);
-    return NULL;
-}
-
-
-/*
- *
- */
-pgmErr* checkPixel(unsigned char pixel, int maxGray, int scanned, char *path)
-{
-    pgmErr *badPixel = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (scanned != 1 || pixel > maxGray || pixel < MIN_PIXEL_VALUE || pixel > MAX_GRAY_VALUE)
+    if (elevation != NO_DATA && (scanned != 1 || elevation > MAX_ELEVATION_VALUE || elevation < MIN_ELEVATION_VALUE))
     {
         // We will free this error when we display it.
-        createError(badPixel, EXIT_BAD_DATA, STR_BAD_DATA, path);
-        return badPixel;
+        createError(badElevation, EXIT_BAD_DATA, STR_BAD_DATA, path);
+        return badElevation;
     }
 
     // Error not triggered. Free it.
-    free(badPixel);
+    free(badElevation);
     return NULL;
 }
 
@@ -415,99 +237,74 @@ pgmErr* checkPixel(unsigned char pixel, int maxGray, int scanned, char *path)
 /*
  *
  */
-pgmErr* checkPixelCount(int count, int expected, char *path)
+gtopoErr* checkElevationCount(int count, int expected, char *path)
 {
-    pgmErr *missingPixels = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *missingElevation = (gtopoErr *) malloc(sizeof(gtopoErr));
 
     if (count != expected)
     {
         // We will free this error when we display it.
-        createError(missingPixels, EXIT_BAD_DATA, STR_BAD_DATA, path);
-        return missingPixels;
+        createError(missingElevation, EXIT_BAD_DATA, STR_BAD_DATA, path);
+        return missingElevation;
     }
 
     // Error not triggered. Free it.
-    free(missingPixels);
+    free(missingElevation);
     return NULL;
 }
 
 
 /*
- *
- */
-pgmErr* checkInvalidWriteMode(int mode)
-{
-    pgmErr *invalidWriteMode = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (mode < 0 || mode > 1)
-    {
-        // We will free this error when we display it.
-        createError(invalidWriteMode, EXIT_MISC, STR_BAD_WRITE_MODE, "");
-        return invalidWriteMode;
-    }
-
-    // Error not triggered. Free it.
-    free(invalidWriteMode);
-    return NULL;
-}
-
-
-/*
+ * Checks whether the input elavation settings for sea, hill and mountain conform
+ * to the specification.
  * 
- */
-pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
+ * ' ' (space): Sea (i.e. value <= sea)
+ * '.' (full stop): Low ground (sea < value <= hill)
+ * '^' (caret): Hills (hill < value <= mountain)
+ * 'A': Mountains (mountain < value)
+ */ 
+gtopoErr* checkElevationSettings(int sea, int hill, int mountain,
+                char lastCharSea, char lastCharHill, char lastCharMountain
+)
 {
-    pgmErr *writeFailed = (pgmErr *) malloc(sizeof(pgmErr));
+    gtopoErr *invalidSettings = (gtopoErr *) malloc(sizeof(gtopoErr));
 
-    if (image == NULL)
+    // Check the values were read from the command line correctly.
+    if (lastCharSea != '\0' || lastCharHill != '\0' || lastCharMountain != '\0')
     {
         // We will free this error when we display it.
-        createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
-        return writeFailed;
+        createError(invalidSettings, EXIT_MISC, STR_MISC, STR_BAD_SETTINGS);
+        return invalidSettings;
     }
 
-    // If the image is allocated but not its raster, create an error.
-    if (getRaster(image) == NULL)
+    // Any two of the three values should not equal each other.
+    if (sea == hill || sea == mountain || hill == mountain)
     {
         // We will free this error when we display it.
-        createError(writeFailed, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, path);
-        return writeFailed;
+        createError(invalidSettings, EXIT_MISC, STR_MISC, STR_BAD_SETTINGS);
+        return invalidSettings;
     }
 
-    // Check that the formatting, image dimensions, and maximum gray value are valid.
-    if (determineFormat(image) < ASCII ||
-        determineFormat(image) > RAW ||
-        getWidth(image) < MIN_IMAGE_DIMENSION ||
-        getWidth(image) > MAX_IMAGE_DIMENSION ||
-        getHeight(image) < MIN_IMAGE_DIMENSION ||
-        getHeight(image) > MAX_IMAGE_DIMENSION ||
-        getMaxGrayValue(image) < MIN_GRAY_VALUE ||
-        getMaxGrayValue(image) > MAX_GRAY_VALUE)
+    // Mountain should be greater than hill and hill should be greater than sea.
+    if (sea > hill || sea > mountain || hill > mountain)
     {
         // We will free this error when we display it.
-        createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
-        return writeFailed;
+        createError(invalidSettings, EXIT_MISC, STR_MISC, STR_BAD_SETTINGS);
+        return invalidSettings;
+    }
+
+    // Check the elevation values are in the valid ranges with special case of -9999.
+    if ((sea != NO_DATA && (sea < MIN_ELEVATION_VALUE || sea > MAX_ELEVATION_VALUE)) ||
+        (hill != NO_DATA && (hill < MIN_ELEVATION_VALUE || hill > MAX_ELEVATION_VALUE)) ||
+        (mountain != NO_DATA && (mountain < MIN_ELEVATION_VALUE || mountain > MAX_ELEVATION_VALUE)))
+    {
+        // We will free this error when we display it.
+        createError(invalidSettings, EXIT_MISC, STR_MISC, STR_BAD_SETTINGS);
+        return invalidSettings;
     }
 
     // Error not triggered. Free it.
-    free(writeFailed);
-    return NULL;
-}
-
-
-pgmErr* checkFileFormat(pgmImage *image, int convertFrom, char *path)
-{
-    pgmErr *badFileToConvert = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (determineFormat(image) != convertFrom)
-    {
-        // We will free this error when we display it.
-        createError(badFileToConvert, EXIT_BAD_MAGIC_NUMBER, STR_BAD_MAGIC_NUMBER, path);
-        return badFileToConvert;
-    }
-
-    // Error not triggered. Free it.
-    free(badFileToConvert);
+    free(invalidSettings);
     return NULL;
 }
 
@@ -516,7 +313,7 @@ pgmErr* checkFileFormat(pgmImage *image, int convertFrom, char *path)
  * Displays the occurrance of an error to the user, printing the error string
  * and returning the exit code that should be used to exit the program with.
  */
-int displayError(pgmErr *err)
+int displayError(gtopoErr *err)
 {
     printf(err->errorMsg);
     int code = err->errorCode;

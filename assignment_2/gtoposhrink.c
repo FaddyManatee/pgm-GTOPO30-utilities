@@ -1,49 +1,49 @@
 #include <math.h>
-#include "pgmdata.h"
+#include "gtopodata.h"
 
-static pgmImage* initialiseReduced(pgmImage *image, int factor)
+static gtopoDEM* initialiseReduced(gtopoDEM *inputDEM, int factor)
 {
     /* 
      * Calculate the dimensions of the reduced image, taking into account remainder
      * pixels after reduction by the factor, using the ceil function to do so.
      */
-    int reducedWidth = ceil(getWidth(image) / (double)factor);
-    int reducedHeight = ceil(getHeight(image) / (double)factor);
+    int reducedWidth = ceil(getWidth(inputDEM) / (double)factor);
+    int reducedHeight = ceil(getHeight(inputDEM) / (double)factor);
 
     // Initialise the image.
-    pgmImage *reduced = createEmptyImage(reducedWidth, reducedHeight, getMaxGrayValue(image), determineFormat(image));
+    gtopoDEM *reduced = createDEM(reducedWidth, reducedHeight);
 
     return reduced;
 } 
 
-pgmImage* reduce(pgmImage *inputImage, int factor)
+gtopoDEM* reduce(gtopoDEM *inputDEM, int factor)
 {
     // Initialise reduced image using the input image and factor.
-    pgmImage *reducedImage = initialiseReduced(inputImage, factor);
+    gtopoDEM *reducedDEM = initialiseReduced(inputDEM, factor);
 
-    unsigned char pixel = 0;
+    signed short elevation = 0;
     int row;
     int column;
     int smallerRow = 0;
     int smallerColumn = 0;
 
-    for (row = 0; row < getHeight(inputImage); row++)
+    for (row = 0; row < getHeight(inputDEM); row++)
     {
-        if (smallerRow > getHeight(reducedImage) - 1)
+        if (smallerRow > getHeight(reducedDEM) - 1)
         {
             break;
         }
 
-        for (column = 0; column < getWidth(inputImage); column++)
+        for (column = 0; column < getWidth(inputDEM); column++)
         {
-            pixel = getPixel(inputImage, row, column);
+            elevation = getElevation(inputDEM, row, column);
             
             if (row % factor == 0 && column % factor == 0)
             {
-                setPixel(reducedImage, pixel, smallerRow, smallerColumn);
+                setElevation(reducedDEM, elevation, smallerRow, smallerColumn);
                 smallerColumn++;
 
-                if (smallerColumn > getWidth(reducedImage) - 1)
+                if (smallerColumn > getWidth(reducedDEM) - 1)
                     smallerRow++;
             }
         }
@@ -51,5 +51,5 @@ pgmImage* reduce(pgmImage *inputImage, int factor)
         smallerColumn = 0;
     }
 
-    return reducedImage;
+    return reducedDEM;
 }

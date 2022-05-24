@@ -3,69 +3,73 @@
 #include <string.h>
 
 // Includes pgmio.h. We can use pgm input/output functions and track the external error.
-#include "pgmgroup.h"
+#include "gtopogroup.h"
 
 // Stores the data from the input tuples about the image and its placement.
-typedef struct pgmSubImage
+typedef struct gtopoSubDEM
 {
-    pgmImage *image;
+    gtopoDEM *subDEM;
     int startRow;
     int startColumn;
-} pgmSubImage;
+} gtopoSubDEM;
 
 
 /*
- * Frees memory allocated to the sub-images.
+ * Frees memory allocated to the sub-DEMs.
  */
-void freeSubImages(pgmSubImage *images, int amount)
+void freeSubDEMs(gtopoSubDEM *subDEMs, int amount)
 {
     int x;
     for (x = 0; x < amount; x++)
     {
-        if (images[x].image != NULL)
-            free(images->image);
+        if (subDEMs[x].subDEM != NULL)
+            freeDEM(subDEMs[x].subDEM);
     }
-    free(images);
+    free(subDEMs);
 }
 
 
 int main(int argc, char **argv)
 {
     /*
-     * Check argument count is greater than or equal to 4. The program requires 
-     * at least 4 arguments to be provided:
+     * Check argument count is greater than or equal to 9. The program requires 
+     * at least 9 arguments to be provided:
      * 
      * argv[0] = Program name
      * argv[1] = Output file name
-     * argv[2] = Image width
-     * argv[3] = Image height
+     * argv[2] = Overall DEM width
+     * argv[3] = Overall DEM height
      * 
      * argv[4] = row (tuple 1)
      * argv[5] = column 
-     * argv[6] = Input file name (Minimum amount of arguments is here, argc == 7) 
+     * argv[6] = Input file name
+     * argv[7] = Width of this DEM data
+     * argv[8] = Height of this DEM data (Minimum amount of arguments is here, argc == 9) 
      * 
-     * argv[7] = row (tuple 2)
-     * argv[8] = column
-     * argv[9] = Input file name
+     * argv[9] = row (tuple 2)
+     * argv[10] = column
+     * argv[11] = Input file name
+     * argv[12] = Width of this DEM data
+     * argv[13] = Height of this DEM data
      * 
      * ...
      */
 
     if (argc == 1)
     {
-        printf("Usage: ./pgmAssemble outputImage.pgm width height (row column inputImage.pgm)+\n", argv[0]);
+        printf("Usage: ./pgmAssemble outputFile width height (row column inputFile width height)+\n", argv[0]);
         return EXIT_NO_ERRORS;
     }
     
-    // We expect a minimum of 7 arguments.
-    if (argc < 7)
+    // We expect a minimum of 9 arguments.
+    if (argc < 9)
     {
         printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
 
-    // Check that arguments for images to be assembled are complete. We expect 3 per image.
-    if ((argc - 4) % 3 != 0)
+    // Check that arguments for images to be assembled are complete. We expect 5 per image.
+    if ((argc - 4) % 5 != 0)
     {
         printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
@@ -76,9 +80,9 @@ int main(int argc, char **argv)
      * Has to be an integer greater than one.
      */
     char *width;
-    int imageWidth = strtol(argv[2], &width, 10);
+    int widthDEM = strtol(argv[2], &width, 10);
 
-    error = checkInvalidDimensionSize(imageWidth, *width);
+    error = checkInvalidWidth(widthDEM, *width);
     if (error != NULL)
         return displayError(error);
 
@@ -87,123 +91,140 @@ int main(int argc, char **argv)
      * Has to be an integer greater than one.
      */
     char *height;
-    int imageHeight = strtol(argv[3], &height, 10);
+    int heightDEM = strtol(argv[3], &height, 10);
 
-    error = checkInvalidDimensionSize(imageHeight, *height);
+    error = checkInvalidHeight(heightDEM, *height);
     if (error != NULL)
         return displayError(error);
 
 
     // Calculate the number of images to be assembled.
-    int subImageAmount = (argc - 4) / 3;
-    pgmSubImage *subImages = (pgmSubImage *) malloc(sizeof(pgmSubImage) * subImageAmount);
+    int subDEMamount = (argc - 4) / 5;
+    gtopoSubDEM *subDEMs = (gtopoSubDEM *) malloc(sizeof(gtopoSubDEM) * subDEMamount);
 
     if (error != NULL)
     {
-        freeSubImages(subImages, subImageAmount);
+        freeSubDEMs(subDEMs, subDEMamount);
         return displayError(error);
     }
 
     // Read tuple tupleData starting from argv[4] until we reach argc.
     int count;
     int argIndex = 4;
-    for (count = 0; count < subImageAmount; count++) 
+    for (count = 0; count < subDEMamount; count++) 
     {
         // Read the row location to insert the image at.
         char *row;
-        int imageRow = strtol(argv[argIndex], &row, 10);
+        int rowDEM = strtol(argv[argIndex], &row, 10);
 
-        error = checkInvalidPosition(imageRow, imageHeight, *row);
+        error = checkInvalidPosition(rowDEM, heightDEM, *row);
         if (error != NULL)
         {
-            freeSubImages(subImages, subImageAmount);
+            freeSubDEMs(subDEMs, subDEMamount);
             return displayError(error);
         }
 
-        // Store the sub-image's row starting position if no error occurred.
-        subImages[count].startRow = imageRow;
+        // Store the sub-DEM's row starting position if no error occurred.
+        subDEMs[count].startRow = rowDEM;
 
 
         // Read the column location to insert the image at.
         char *column;
-        int imageColumn = strtol(argv[argIndex + 1], &column, 10);
+        int columnDEM = strtol(argv[argIndex + 1], &column, 10);
 
-        error = checkInvalidPosition(imageColumn, imageWidth, *column);
+        error = checkInvalidPosition(columnDEM, widthDEM, *column);
         if (error != NULL)
         {
-            freeSubImages(subImages, subImageAmount);
+            freeSubDEMs(subDEMs, subDEMamount);
             return displayError(error);
         }
 
-        // Store the sub-image's column starting position if no error occurred.
-        subImages[count].startColumn = imageColumn;
+        // Store the sub-DEM's column starting position if no error occurred.
+        subDEMs[count].startColumn = columnDEM;
 
-        // Open the sub-image to be assembled.
-        subImages[count].image = readImage(argv[argIndex + 2]);
+        /* 
+         * Convert the width CLI argument to an integer. Check that the width is valid.
+         * Has to be an integer greater than one.
+         */
+        int subWidthDEM = strtol(argv[argIndex + 3], &width, 10);
+
+        error = checkInvalidWidth(subWidthDEM, *width);
+        if (error != NULL)
+        {
+            freeSubDEMs(subDEMs, subDEMamount);
+            return displayError(error);
+        }
+
+        /* 
+         * Convert the height CLI argument to an integer. Check that the height is valid.
+         * Has to be an integer greater than one.
+         */
+        int subHeightDEM = strtol(argv[argIndex + 4], &height, 10);
+
+        error = checkInvalidHeight(subHeightDEM, *height);
+        if (error != NULL)
+        {
+            freeSubDEMs(subDEMs, subDEMamount);
+            return displayError(error);
+        }
+
+        // Open the sub-DEM to be assembled.
+        subDEMs[count].subDEM = readDEM(argv[argIndex + 2], subWidthDEM, subHeightDEM);
         
         // If the external error pointer is no longer null, a file read error has been detected.
         if (error != NULL)
         {
-            freeSubImages(subImages, subImageAmount);
+            freeSubDEMs(subDEMs, subDEMamount);
             return displayError(error);
         }
 
-        // Add 3 to argIndex to point to the next sub-image to insert.
-        argIndex = argIndex + 3;
+        // Add 5 to argIndex to point to the next sub-DEM to insert.
+        argIndex = argIndex + 5;
     }
 
-    // If no error occurred, assemble the larger image from these sub-images.
-    // Find the largest maximum gray value of the sub-images.
-    int largestGray = MIN_GRAY_VALUE - 1;
-    int currentGray = MIN_GRAY_VALUE - 1;
-    for (count = 0; count < subImageAmount; count++)
-    {
-        currentGray = getMaxGrayValue(subImages[count].image);
-
-        if (currentGray > largestGray)
-            largestGray = currentGray;
-    }
-
-    // Initialise the image that we assemble the sub-images onto.
-    pgmImage *image = createEmptyImage(imageWidth, imageHeight, largestGray, ASCII);
+    // Initialise the image that we assemble the sub-DEMs onto if no error occurred.
+    gtopoDEM *parentDEM = createDEM(widthDEM, heightDEM);
 
     // Check that the image was allocated.
-    error = checkImageAllocated(image);
-
+    error = checkDEMallocated(parentDEM);
     if (error != NULL)
     {
-        freeImage(image);
-        freeSubImages(subImages, subImageAmount);
+        freeDEM(parentDEM);
+        freeSubDEMs(subDEMs, subDEMamount);
         return displayError(error);
     }
 
-    // Add the sub-images to the image.
-    for (count = 0; count < subImageAmount; count++)
+    // Add the sub-DEMs to the image.
+    for (count = 0; count < subDEMamount; count++)
     {
-        int success = addImage(image, subImages[count].image, subImages[count].startRow, 
-                        subImages[count].startColumn);
+        int success = addDEM(parentDEM, subDEMs[count].subDEM, subDEMs[count].startRow, 
+                        subDEMs[count].startColumn);
         
         // If pixels to add were outside of the image, exit.
         if (success == 1)
         {
-            freeSubImages(subImages, subImageAmount);
-            freeImage(image);
+            freeSubDEMs(subDEMs, subDEMamount);
+            freeDEM(parentDEM);
             printf(STR_BAD_LAYOUT);
             return EXIT_BAD_LAYOUT;
         }
 
     }
 
-    // Write the final image to disk with the path stored in argv[1].
-    echoImage(image, argv[1]);
+    // Write the final DEM data to disk with the path stored in argv[1].
+    echoDEM(parentDEM, argv[1]);
 
     // Check that the file wrote to disk properly.
     if (error != NULL)
     {
-        freeSubImages(subImages, subImageAmount);
-        freeImage(image);
+        freeSubDEMs(subDEMs, subDEMamount);
+        freeDEM(parentDEM);
         return displayError(error);
     }
+
+    // Clean up before exiting.
+    freeSubDEMs(subDEMs, subDEMamount);
+    freeDEM(parentDEM);
 
     // Display success string and exit the program.
     printf(STR_ASSEMBLED);

@@ -117,7 +117,8 @@ image* createImage()
 
 /*
  * Dynamically allocates enough memory to the image raster to store each pixel and
- * initialises their values to 0.
+ * initialises their values to 0. If memory allocation fails, the raster is set to
+ * NULL.
  */
 void initImageRaster(image *image)
 {       
@@ -128,20 +129,21 @@ void initImageRaster(image *image)
 
     image->raster = (unsigned char **) malloc(sizeof(unsigned char *) * image->height);
 
+    if (image->raster == NULL)
+        return;
+
     // Allocate memory to each pixel in the raster and set them to an initial value of 0.
     int row;
     int column;
 
     for (row = 0; row < image->height; row++)
     {
-        image->raster[row] = (unsigned char *) malloc(sizeof(unsigned char) * image->width);
-    }
+        image->raster[row] = (unsigned char *) calloc(image->width, sizeof(unsigned char));
 
-    for (row = 0; row < image->height; row++)
-    {
-        for (column = 0; column < image->width; column++)
+        if (image->raster[row] == NULL)
         {
-            image->raster[row][column] = 0;
+            image->raster = NULL;
+            return;
         }
     }
 }
@@ -164,6 +166,18 @@ image* createEmptyImage(int imageWidth, int imageHeight, int maxGray, int rawOrA
     newImage->height = imageHeight;
     newImage->maxGrayValue = maxGray;
     initImageRaster(newImage);
+
+    if (newImage->raster == NULL)
+        return NULL;
+
+    int row;
+    for (row = 0; row < newImage->height; row++)
+    {
+        if (newImage->raster[row] == NULL)
+        {
+            return NULL;
+        }
+    }
 
     if (rawOrAscii == ASCII)
     {
@@ -349,7 +363,7 @@ void setPixel(image *image, unsigned char value, int row, int column)
  * Frees all dynamically allocated data related to an image given its pointer
  * which includes the raster and comments.
  */
-void freeImage(image* image)
+void freeImage(image *image)
 {
     // Only free if the image is initialised.
     if (image != NULL)

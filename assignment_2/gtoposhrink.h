@@ -1,3 +1,3 @@
-#include "pgmio.h"
+#include "gtopoio.h"
 
-pgmImage* reduce(pgmImage *inputImage, int factor);
+gtopoDEM* reduce(gtopoDEM *inputDEM, int factor);

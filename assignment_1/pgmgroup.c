@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pgmdata.h"
+#include "pgmerror.h"
 
 typedef struct point
 {
@@ -11,12 +12,6 @@ typedef struct point
 
 static pgmImage*** createTiles(pgmImage *image, int factor)
 {
-    /*
-     * Image tiles will be stored in an array and stored sequentially. The order
-     * of the tiles in this array will be for a factor of 3: row0col0, row0col1,
-     * row0col2, row1col0, row1col1, row1col2, row2col0, row2col1, row2col2.
-     */
-
     // Calculate the width of right-most tiles.
     int tileRightWidth = (getWidth(image) / factor) + (getWidth(image) % factor);
     
@@ -45,19 +40,23 @@ static pgmImage*** createTiles(pgmImage *image, int factor)
         {
             if (row < factor - 1 && column < factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createEmptyImage(tileWidth, tileHeight,
+                    getMaxGrayValue(image), determineFormat(image));
             }
             else if (row < factor - 1 && column == factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileRightWidth, tileHeight, getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createEmptyImage(tileRightWidth, tileHeight, 
+                    getMaxGrayValue(image), determineFormat(image));
             }
             else if (row == factor - 1 && column < factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));   
+                tiles[row][column] = createEmptyImage(tileWidth, tileBottomHeight,
+                    getMaxGrayValue(image), determineFormat(image));   
             }
             else if (row == factor - 1 && column == factor - 1)
             {
-                tiles[row][column] = createEmptyImage(tileRightWidth, tileBottomHeight, getMaxGrayValue(image), determineFormat(image));
+                tiles[row][column] = createEmptyImage(tileRightWidth, tileBottomHeight,
+                    getMaxGrayValue(image), determineFormat(image));
             }
         }
     }
@@ -108,6 +107,7 @@ pgmImage*** tile(pgmImage *image, int factor)
      */
     pgmImage ***imageTiles = createTiles(image, factor);
 
+    // Calculate the coordinates where each tile begins (top-left corner).
     point **readPoints = calculateReadPoints(image, imageTiles, factor);
 
     int row;
@@ -125,7 +125,11 @@ pgmImage*** tile(pgmImage *image, int factor)
             {
                 for (subColumn = 0; subColumn < getWidth(imageTiles[row][column]); subColumn++)
                 {
-                    setPixel(imageTiles[row][column], getPixel(image, readPoints[row][column].heightCoord + subRow, readPoints[row][column].widthCoord + subColumn), subRow, subColumn);
+                    // Assign current pixel to corresponding tile.
+                    setPixel(imageTiles[row][column], 
+                        getPixel(image, readPoints[row][column].heightCoord + subRow,
+                            readPoints[row][column].widthCoord + subColumn),
+                        subRow, subColumn);
                 }
             }
         }
@@ -144,34 +148,48 @@ pgmImage*** tile(pgmImage *image, int factor)
 
 /*
  * Adds the child image to the parent image with the top-left corner of the image
- * placed at the specified row and column values.
+ * placed at the specified row and column values. Returns 0 on success and 1 on
+ * failure if pixels of a sub-image are placed outside of the larger image.
  */
-void addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
+int addImage(pgmImage *parent, pgmImage *child, int startRow, int startColumn)
 {
     int parentRow;
     int parentColumn;
     int childRow = 0;
     int childColumn = 0;
+    int pixelsWritten = 0;
 
     for (parentRow = startRow; parentRow < getHeight(parent); parentRow++)
     {
-        if (startRow + childRow > getHeight(parent) - 1 || childRow == getHeight(child) - 1)
+        if (startRow + childRow > getHeight(parent) || childRow == getHeight(child))
         {
             break;
         }
 
         for (parentColumn = startColumn; parentColumn < getWidth(parent); parentColumn++)
         {
-            if (startColumn + childColumn > getWidth(parent) - 1 || childColumn == getWidth(child) - 1)
+            if (startColumn + childColumn > getWidth(parent) || childColumn == getWidth(child))
             {
                 break;
             }
 
             setPixel(parent, getPixel(child, childRow, childColumn), parentRow, parentColumn);
             childColumn++;
+            pixelsWritten++;
         }
 
         childRow++;
         childColumn = 0;
-    } 
+    }
+
+    // Check that all pixels of the child/sub-image were written.
+    if (pixelsWritten != getWidth(child) * getHeight(child))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+
 }

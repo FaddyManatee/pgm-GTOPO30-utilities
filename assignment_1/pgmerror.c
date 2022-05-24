@@ -81,7 +81,7 @@ pgmErr* checkInvalidFactor(int factor, char lastChar)
 /*
  * Checks whether the argument for a dimension is greater than 0 and less than 65536.
  */
-pgmErr* checkInvalidDimension(int dimension, char lastChar)
+pgmErr* checkInvalidDimensionSize(int dimension, char lastChar)
 {
     pgmErr *invalidDimension = (pgmErr *) malloc(sizeof(pgmErr));
 
@@ -97,73 +97,19 @@ pgmErr* checkInvalidDimension(int dimension, char lastChar)
 
 
 /*
- * Checks whether a tuple for image assembly is non-empty and padded with parentheses.
+ * Checks whether a row/column position for image assembly is valid
  */
-pgmErr* checkInvalidTupleFormat(char *tuple)
+pgmErr* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar)
 {
-    pgmErr *invalidTuple = (pgmErr *) malloc(sizeof(pgmErr));
+    pgmErr *invalidPosition = (pgmErr *) malloc(sizeof(pgmErr));
 
-    if (!(strlen(tuple) > 0 && tuple[0] == '(' && tuple[strlen(tuple) - 1] == ')'))
+    if (axisPosition < MIN_IMAGE_DIMENSION - 1 || axisPosition > axisEnd - 1 || lastChar != '\0')
     {
-        createError(invalidTuple, EXIT_MISC, STR_MISC, STR_BAD_TUPLE);
-        return invalidTuple;
+        createError(invalidPosition, EXIT_MISC, STR_MISC, STR_BAD_ROW);
+        return invalidPosition;
     }
 
-    free(invalidTuple);
-    return NULL;
-}
-
-
-/*
- * Checks whether a tuple for image assembly contains 3 space delimited values.
- */
-pgmErr* checkInvalidTupleElements(int count)
-{
-    pgmErr *invalidElements = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (count != 3)
-    {
-        createError(invalidElements, EXIT_MISC, STR_MISC, STR_BAD_TUPLE);
-        return invalidElements;
-    }
-
-    free(invalidElements);
-    return NULL;
-}
-
-
-/*
- * Checks whether a tuple for image assembly contains a valid start row.
- */
-pgmErr* checkInvalidRow(int row, int totalRows, char lastChar)
-{
-    pgmErr *invalidRow = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (row < MIN_IMAGE_DIMENSION - 1 || row > totalRows - 1 || lastChar != '\0')
-    {
-        createError(invalidRow, EXIT_MISC, STR_MISC, STR_BAD_ROW);
-        return invalidRow;
-    }
-
-    free(invalidRow);
-    return NULL;
-}
-
-
-/*
- * Checks whether a tuple for image assembly contains a valid start column.
- */
-pgmErr* checkInvalidColumn(int column, int totalColumns, char lastChar)
-{
-    pgmErr *invalidColumn = (pgmErr *) malloc(sizeof(pgmErr));
-
-    if (column < MIN_IMAGE_DIMENSION - 1 || column > totalColumns - 1 || lastChar != '\0')
-    {
-        createError(invalidColumn, EXIT_MISC, STR_MISC, STR_BAD_COLUMN);
-        return invalidColumn;
-    }
-
-    free(invalidColumn);
+    free(invalidPosition);
     return NULL;
 }
 
@@ -376,6 +322,36 @@ pgmErr* checkImageAllocated(pgmImage *image)
 /*
  *
  */
+pgmErr* checkRasterAllocated(unsigned char **raster, int width, int height)
+{
+    pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
+
+    if (raster == NULL)
+    {
+        // We will free the error when we display it.
+        createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+        return rasterNotAllocated;
+    }
+
+    int row;
+    for (row = 0; row < height; row++)
+    {
+        if (raster[row] == NULL)
+        {
+            createError(rasterNotAllocated, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, "");
+            return rasterNotAllocated;
+        }
+    }
+    
+    // Error not triggered. Free it.
+    free(rasterNotAllocated);
+    return NULL;
+}
+
+
+/*
+ *
+ */
 pgmErr* checkRequiredData(pgmImage *image, char *path)
 {
     pgmErr *rasterNotAllocated = (pgmErr *) malloc(sizeof(pgmErr));
@@ -401,7 +377,7 @@ pgmErr* checkRequiredData(pgmImage *image, char *path)
 /*
  *
  */
-pgmErr* checkPixel(unsigned short pixel, int maxGray, int scanned, char *path)
+pgmErr* checkPixel(unsigned char pixel, int maxGray, int scanned, char *path)
 {
     pgmErr *badPixel = (pgmErr *) malloc(sizeof(pgmErr));
 
@@ -476,7 +452,7 @@ pgmErr* checkImageCanBeWritten(pgmImage *image, char *path)
     if (getRaster(image) == NULL)
     {
         // We will free this error when we display it.
-        createError(writeFailed, EXIT_OUTPUT_FAILED, STR_OUTPUT_FAILED, path);
+        createError(writeFailed, EXIT_IMAGE_MALLOC_FAILED, STR_IMAGE_MALLOC_FAILED, path);
         return writeFailed;
     }
 

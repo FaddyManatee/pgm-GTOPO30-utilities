@@ -1,25 +1,17 @@
 #include <stdio.h>
 
-typedef struct pgmErr pgmError;
+typedef struct gtopoErr gtopoError;
 
-pgmError* checkInvalidFileName(FILE *file, char *path);
-pgmError* checkInvalidWriteMode(int mode);
-pgmError* checkInvalidFactor(int factor, char lastChar);
-pgmError* checkInvalidDimensionSize(int dimension, char lastChar);
-pgmError* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar);
-pgmError* checkTagsPresent(char *template, char *rowTag, char *colTag);
-pgmError* checkFileFormat(pgmImage *image, int convertFrom, char *path);
-pgmError* checkImageCanBeWritten(pgmImage *image, char *path);
-pgmError* checkEOF(FILE *file, char *path);
-pgmError* checkBinaryEOF(int scanned, char *path);
-pgmError* checkComment(char *comment, char *path);
-pgmError* checkCommentLimit(char *comment);
-pgmError* checkInvalidMagicNo(unsigned short *magicNo, char *path);
-pgmError* checkInvalidDimensions(int width, int height, int scanned, char *path);
-pgmError* checkInvalidMaxGrayValue(int maxGray, int scanned, char *path);
-pgmError* checkImageAllocated(pgmImage *image);
-pgmError* checkRasterAllocated(unsigned char **raster, int width, int height);
-pgmError* checkRequiredData(pgmImage *image, char *path);
-pgmError* checkPixel(unsigned char pixel, int maxGray, int scanned, char *path);
-pgmError* checkPixelCount(int count, int expected, char *path);
-int displayError(pgmError *err);
+gtopoError* checkInvalidFileName(FILE *file, char *path);
+gtopoError* checkInvalidFactor(int factor, char lastChar);
+gtopoError* checkInvalidWidth(int width, char lastChar);
+gtopoError* checkInvalidHeight(int height, char lastChar);
+gtopoError* checkInvalidPosition(int axisPosition, int axisEnd, char lastChar);
+gtopoError* checkTagsPresent(char *template, char *rowTag, char *colTag);
+gtopoError* checkEOF(int scanned, char *path);
+gtopoError* checkDEMallocated(gtopoDEM *targetDEM);
+gtopoError* checkElevation(signed short elevation, int scanned, char *path);
+gtopoError* checkElevationCount(int count, int expected, char *path);
+gtopoError* checkElevationSettings(int sea, int hill, int mountain,
+                char lastCharSea, char lastCharHill, char lastCharMountain);
+int displayError(gtopoError *err);

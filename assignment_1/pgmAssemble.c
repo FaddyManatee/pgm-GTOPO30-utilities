@@ -9,96 +9,25 @@
 typedef struct pgmSubImage
 {
     pgmImage *image;
-    char *path;
     int startRow;
     int startColumn;
 } pgmSubImage;
 
 
 /*
- * Extracts starting row, starting column and the file path from tuple arguments.
- * Can return an error.
+ * Frees memory allocated to the sub-images.
  */
-void processTuple(pgmSubImage *subImage, int totalWidth, int totalHeight, char *tuple)
+void freeSubImages(pgmSubImage *images, int amount)
 {
-    // Check that the tuple is valid.
-    error = checkInvalidTupleFormat(tuple);
-    if (error != NULL)
-        return;
-
-    // Remove the parentheses from the ends of the tuple.
-    char *tupleData = (char *) malloc(sizeof(char) * strlen(tuple));
-
-    int start;
-    for (start = 1; start < strlen(tuple) - 1; start++)
+    int x;
+    for (x = 0; x < amount; x++)
     {
-        tupleData[start - 1] = tuple[start];
+        if (images[x].image != NULL)
+            freeImage(images[x].image);
     }
-
-    char *token;
-    char *rowToken;
-    char *columnToken;
-    char *pathToken;
-    int tokenCount = 0;
-    int row = 0;
-    int column = 0;
-
-    // Find each and every space delimited value in the resulting string.
-    for (token = strtok(tupleData, " "); token != NULL; token = strtok(NULL, " "))
-    {
-        if (tokenCount == 0)
-        {
-            // We expect the row to appear first.
-            row = strtol(token, &rowToken, 10);
-        }
-        else if (tokenCount == 1)
-        {
-            // We expect the column to appear second.
-            column = strtol(token, &columnToken, 10);
-        }
-        else if (tokenCount == 2)
-        {
-            // We expect the file path of the sub-image to appear last.
-            subImage->path = (char *) malloc(sizeof(char) * strlen(token));
-            strcpy(subImage->path, token);
-        }
-
-        tokenCount++;
-    }
-
-    // Check that the tuples contained the correct amount of data.
-    error = checkInvalidTupleElements(tokenCount);
-    if (error != NULL)
-    {
-        free(tupleData);
-        return;
-    }
-
-    // Check that the starting row value is valid and is within the height bounds of the image.
-    error = checkInvalidRow(row, totalHeight, *rowToken);
-    if (error != NULL)
-    {
-        free(tupleData);
-        return;
-    }
-
-    // If valid, set the starting row of the sub-image.
-    subImage->startRow = row;
-
-
-    // Check that the starting column value is valid and is within the width bounds of the image.
-    error = checkInvalidColumn(column, totalWidth, *columnToken);
-    if (error != NULL)
-    {
-        free(tupleData);
-        return;
-    }
-
-    // If valid, set the starting column of the sub-image.
-    subImage->startColumn = column;
-
-    free(tupleData);
+    free(images);
 }
+
 
 int main(int argc, char **argv)
 {
@@ -110,13 +39,16 @@ int main(int argc, char **argv)
      * argv[1] = Output file name
      * argv[2] = Image width
      * argv[3] = Image height
-     * argv[4] = Tuple (row column inputImage.pgm)
-     * argv[5] = ...
-     * argv[6] = ...
      * 
-     * Make sure that the argument in argv[1] is a path because the user can input 
-     * the width, height and three image tuples, forgetting the output file name 
-     * and get past the argument count check.
+     * argv[4] = row (tuple 1)
+     * argv[5] = column 
+     * argv[6] = Input file name (Minimum amount of arguments is here, argc == 7) 
+     * 
+     * argv[7] = row (tuple 2)
+     * argv[8] = column
+     * argv[9] = Input file name
+     * 
+     * ...
      */
 
     if (argc == 1)
@@ -125,12 +57,19 @@ int main(int argc, char **argv)
         return EXIT_NO_ERRORS;
     }
     
-    if (argc < 4)
+    // We expect a minimum of 7 arguments.
+    if (argc < 7)
     {
         printf(STR_BAD_ARGS_COUNT);
         return EXIT_BAD_ARGS_COUNT;
     }
 
+    // Check that arguments for images to be assembled are complete. We expect 3 per image.
+    if ((argc - 4) % 3 != 0)
+    {
+        printf(STR_BAD_ARGS_COUNT);
+        return EXIT_BAD_ARGS_COUNT;
+    }
 
     /* 
      * Convert the width CLI argument to an integer. Check that the width is valid.
@@ -138,7 +77,8 @@ int main(int argc, char **argv)
      */
     char *width;
     int imageWidth = strtol(argv[2], &width, 10);
-    error = checkInvalidDimension(imageWidth, *width);
+
+    error = checkInvalidDimensionSize(imageWidth, *width);
     if (error != NULL)
         return displayError(error);
 
@@ -148,48 +88,68 @@ int main(int argc, char **argv)
      */
     char *height;
     int imageHeight = strtol(argv[3], &height, 10);
-    error = checkInvalidDimension(imageHeight, *height);
+
+    error = checkInvalidDimensionSize(imageHeight, *height);
     if (error != NULL)
         return displayError(error);
 
-    // Calculate the number of tuples/images to be assembled.
-    int subImageAmount = argc - 4;
+
+    // Calculate the number of images to be assembled.
+    int subImageAmount = (argc - 4) / 3;
     pgmSubImage *subImages = (pgmSubImage *) malloc(sizeof(pgmSubImage) * subImageAmount);
+
+    if (error != NULL)
+    {
+        freeSubImages(subImages, subImageAmount);
+        return displayError(error);
+    }
 
     // Read tuple tupleData starting from argv[4] until we reach argc.
     int count;
+    int argIndex = 4;
     for (count = 0; count < subImageAmount; count++) 
     {
-        // Tuples start from argv[4].
-        char *tupleArgument = argv[count + 4];
-        processTuple(&subImages[count], imageWidth, imageHeight, tupleArgument);
+        // Read the row location to insert the image at.
+        char *row;
+        int imageRow = strtol(argv[argIndex], &row, 10);
 
-        // If the tuple is invalid, break.
+        error = checkInvalidPosition(imageRow, imageHeight, *row);
         if (error != NULL)
-            break;
+        {
+            freeSubImages(subImages, subImageAmount);
+            return displayError(error);
+        }
+
+        // Store the sub-image's row starting position if no error occurred.
+        subImages[count].startRow = imageRow;
+
+
+        // Read the column location to insert the image at.
+        char *column;
+        int imageColumn = strtol(argv[argIndex + 1], &column, 10);
+
+        error = checkInvalidPosition(imageColumn, imageWidth, *column);
+        if (error != NULL)
+        {
+            freeSubImages(subImages, subImageAmount);
+            return displayError(error);
+        }
+
+        // Store the sub-image's column starting position if no error occurred.
+        subImages[count].startColumn = imageColumn;
 
         // Open the sub-image to be assembled.
-        subImages[count].image = readImage(subImages[count].path);
+        subImages[count].image = readImage(argv[argIndex + 2]);
         
-        // If the external error pointer is no longer null, a file read error has been detected. Break.
+        // If the external error pointer is no longer null, a file read error has been detected.
         if (error != NULL)
-            break;
-    }
-
-    // Display the error that occurred when processing the tuple data.
-    if (error != NULL)
-    {
-        for (count = 0; count < subImageAmount; count++)
         {
-            if (subImages[count].path != NULL)
-                free(subImages[count].path);
-
-            if (subImages[count].image != NULL)
-                freeImage(subImages[count].image);
+            freeSubImages(subImages, subImageAmount);
+            return displayError(error);
         }
-        free(subImages);
 
-        return displayError(error);
+        // Add 3 to argIndex to point to the next sub-image to insert.
+        argIndex = argIndex + 3;
     }
 
     // If no error occurred, assemble the larger image from these sub-images.
@@ -212,24 +172,26 @@ int main(int argc, char **argv)
 
     if (error != NULL)
     {
-        for (count = 0; count < subImageAmount; count++)
-        {
-            if (subImages[count].path != NULL)
-                free(subImages[count].path);
-
-            if (subImages[count].image != NULL)
-                freeImage(subImages[count].image);
-        }
-        free(subImages);
-
+        freeImage(image);
+        freeSubImages(subImages, subImageAmount);
         return displayError(error);
     }
-
 
     // Add the sub-images to the image.
     for (count = 0; count < subImageAmount; count++)
     {
-        addImage(image, subImages[count].image, subImages[count].startRow, subImages[count].startColumn);
+        int success = addImage(image, subImages[count].image, subImages[count].startRow, 
+                        subImages[count].startColumn);
+        
+        // If pixels to add were outside of the image, exit.
+        if (success == 1)
+        {
+            freeSubImages(subImages, subImageAmount);
+            freeImage(image);
+            printf(STR_BAD_LAYOUT);
+            return EXIT_BAD_LAYOUT;
+        }
+
     }
 
     // Write the final image to disk with the path stored in argv[1].
@@ -238,18 +200,8 @@ int main(int argc, char **argv)
     // Check that the file wrote to disk properly.
     if (error != NULL)
     {
-        for (count = 0; count < subImageAmount; count++)
-        {
-            if (subImages[count].path != NULL)
-                free(subImages[count].path);
-
-            if (subImages[count].image != NULL)
-                freeImage(subImages[count].image);
-        }
-        free(subImages);
-
+        freeSubImages(subImages, subImageAmount);
         freeImage(image);
-
         return displayError(error);
     }
 
