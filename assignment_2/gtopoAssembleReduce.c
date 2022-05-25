@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
     if (argc == 1)
     {
-        printf("Usage: ././gtopoAssembleReduce outputArray.gtopo width height (row column inputArray.gtopo width height)+\n", argv[0]);
+        printf("Usage: ./gtopoAssembleReduce outputArray.gtopo width height reduction_factor (row column inputArray.gtopo width height)+\n", argv[0]);
         return EXIT_NO_ERRORS;
     }
     

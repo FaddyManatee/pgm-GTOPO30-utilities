@@ -15,7 +15,7 @@ printFailed() {
 assertionFailed() {
     eval expected=$1
     eval wasThis=$2
-    printf "Expected ${expected}, was ${wasThis}\n\n"
+    printf "Expected: ${expected}, was ${wasThis}\n\n"
 }
 
 numberOfTests=0

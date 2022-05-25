@@ -16,7 +16,7 @@
 #define STR_BAD_DIMENSIONS "ERROR: Bad Dimensions"
 
 #define EXIT_MALLOC_FAILED 7
-#define STR_MALLOC_FAILED "ERROR: Malloc Failed"
+#define STR_MALLOC_FAILED "ERROR: Image Malloc Failed"
 
 #define EXIT_BAD_DATA 8
 #define STR_BAD_DATA "ERROR: Bad Data"
@@ -38,6 +38,5 @@
 #define STR_BAD_DIMENSION "Ensure dimensions match those of the input file"
 #define STR_BAD_ROW "Rows must be integers greater than or equal to 0 and less than the height (indexing from 0)"
 #define STR_BAD_COLUMN "Columns must be integers greater than or equal to 0 and less than the width (indexing from 0)"
-#define STR_BAD_TUPLE "Bad image assembly tuple. Expected format: \"(row column inputFile.pgm)\""
 
 #define STR_BAD_SETTINGS "Incorrect values for sea, hill and mountain"

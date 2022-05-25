@@ -49,4 +49,3 @@
 #define STR_BAD_DIMENSION "Specify the output file path and ensure dimensions are integers between 1 and 65535 inclusive"
 #define STR_BAD_ROW "Rows must be integers greater than or equal to 0 and less than the height (indexing from 0)"
 #define STR_BAD_COLUMN "Columns must be integers greater than or equal to 0 and less than the width (indexing from 0)"
-#define STR_BAD_TUPLE "Bad image assembly tuple. Expected format: \"(row column inputImage.pgm)\""

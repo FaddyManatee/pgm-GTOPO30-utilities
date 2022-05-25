@@ -1,7 +1,7 @@
 Running the submission
 
 Running the makefile:
-make <target>*
+make <target>
 
 Individual program targets: pgmEcho, pgmComp, pgma2b, pgmb2a, pgmReduce, pgmTile
 All programs target: all

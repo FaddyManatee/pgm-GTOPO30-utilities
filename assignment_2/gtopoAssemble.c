@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
     if (argc == 1)
     {
-        printf("Usage: ./pgmAssemble outputFile width height (row column inputFile width height)+\n", argv[0]);
+        printf("Usage: ./gtopoAssemble outputFile width height (row column inputFile width height)+\n", argv[0]);
         return EXIT_NO_ERRORS;
     }
     

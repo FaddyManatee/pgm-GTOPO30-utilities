@@ -12,3 +12,5 @@ the program safely if the data does not meet the pgm standard. Non-trivial data 
 files with non-integer characters in (other than comments), or more trivially, both 
 files with data points that exceed the bounds of the set max gray value or this value 
 exceeding its bounds of 1-65536 should cause the program to exit safely.
+
+UPDATE: Most of the testing was done manually instead.
